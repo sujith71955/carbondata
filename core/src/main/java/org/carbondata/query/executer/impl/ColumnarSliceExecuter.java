@@ -26,6 +26,7 @@ import org.carbondata.common.logging.LogServiceFactory;
 import org.carbondata.common.logging.impl.StandardLogService;
 import org.carbondata.core.datastorage.store.FileHolder;
 import org.carbondata.core.datastorage.store.impl.FileFactory;
+import org.carbondata.core.util.CarbonUtil;
 import org.carbondata.query.columnar.aggregator.ColumnarAggregatorInfo;
 import org.carbondata.query.columnar.datastoreblockprocessor.ColumnarDataStoreBlockProcessorInfo;
 import org.carbondata.query.columnar.datastoreblockprocessor.DataStoreBlockProcessor;
@@ -62,14 +63,16 @@ public class ColumnarSliceExecuter implements Callable<Void> {
         this.partitionID = StandardLogService.getPartitionID(info.getCubeName());
         this.queryID = info.getQueryId();
         StandardLogService.setThreadName(partitionID, queryID);
+        int [] directSurrogateIndexes=CarbonUtil.getNoDictionaryColIndex(info.getCurrentDimTables());
         if (!info.isDetailQuery()) {
             this.columnarstorageScanner = new ColumnarStorageAggregatedScannerImpl(
                     getColumnarStorageScannerInfo(info, scannedResultProcessor, dataStoreBlock,
-                            numberOfNodesToScan));
+                      
+                            numberOfNodesToScan),directSurrogateIndexes);
         } else {
             this.columnarstorageScanner = new ColumnarStorageScannerImpl(
                     getColumnarStorageScannerInfo(info, scannedResultProcessor, dataStoreBlock,
-                            numberOfNodesToScan));
+                            numberOfNodesToScan),directSurrogateIndexes);
         }
     }
 

@@ -141,8 +141,15 @@ public class ListBasedResultAggregatorImpl implements ColumnarScannedResultAggre
                         && restructureHolder.metaData.getNewDimsDefVals().length > 0) {
                     for (int k = 0;
                          k < restructureHolder.metaData.getNewDimsDefVals().length; k++) {
+                      if(restructureHolder.getIsHighCardinalityNewDims()[k])
+                      {
+                        key.addToDirectSurrogateKeyList(restructureHolder.metaData.getNewDimsDefVals()[k].getBytes());
+                      }
+                      else
+                      {
                         updatedData[data.length + k] =
                                 restructureHolder.metaData.getNewDimsSurrogateKeys()[k];
+                      }
                     }
                 }
                 if (restructureHolder.getQueryDimsCount() == columnaraggreagtorInfo

@@ -31,6 +31,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.google.gson.Gson;
+
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.carbondata.common.logging.LogService;
@@ -47,6 +49,7 @@ import org.carbondata.core.datastorage.store.filesystem.CarbonFileFilter;
 import org.carbondata.core.datastorage.store.impl.FileFactory;
 import org.carbondata.core.keygenerator.mdkey.NumberCompressor;
 import org.carbondata.core.load.LoadMetadataDetails;
+import org.carbondata.core.metadata.CarbonMetadata.Dimension;
 import org.carbondata.core.metadata.LeafNodeInfo;
 import org.carbondata.core.metadata.LeafNodeInfoColumnar;
 import org.carbondata.core.metadata.SliceMetaData;
@@ -1984,6 +1987,26 @@ public final class CarbonUtil {
         FileFactory.FileType fileType = FileFactory.getFileType(filePath);
         CarbonFile carbonFile = FileFactory.getCarbonFile(filePath, fileType);
         return carbonFile.getSize();
+    }
+    
+    /**
+     * This API will record the indexes of the dimension which doesnt have
+     * Dictionary values.
+     * @param currentDims .
+     * @return
+     */
+    public static int[] getNoDictionaryColIndex(Dimension[] currentDims)
+    {
+      List<Integer> dirSurrogateList=new ArrayList<Integer>(currentDims.length);
+      for(Dimension dim:currentDims)
+      {
+        if(dim.isHighCardinalityDim())
+        {
+          dirSurrogateList.add(dim.getOrdinal());
+        }
+      }
+      int[] directSurrogateIndex=ArrayUtils.toPrimitive(dirSurrogateList.toArray(new Integer[dirSurrogateList.size()]));
+      return directSurrogateIndex;
     }
 }
 

@@ -19,7 +19,7 @@
 
 package org.carbondata.core.datastorage.store.columnar;
 
-import java.util.Map;
+import java.util.List;
 
 import org.carbondata.core.keygenerator.KeyGenerator;
 import org.carbondata.core.keygenerator.factory.KeyGeneratorFactory;
@@ -43,11 +43,6 @@ public class ColumnarKeyStoreMetadata {
      * isDirectSurrogateColumn.
      */
     private boolean isDirectSurrogateColumn;
-
-    /**
-     * mapOfColumnarKeyBlockData
-     */
-    private Map<Integer, byte[]> mapOfColumnarKeyBlockData;
     private boolean isRowStore;
 
     public ColumnarKeyStoreMetadata(int eachRowSize) {
@@ -153,22 +148,4 @@ public class ColumnarKeyStoreMetadata {
 
     }
 
-    /**
-     * setDirectSurrogateKeyMembers.
-     *
-     * @param mapOfColumnarKeyBlockData
-     */
-    public void setDirectSurrogateKeyMembers(Map<Integer, byte[]> mapOfColumnarKeyBlockData) {
-        this.mapOfColumnarKeyBlockData = mapOfColumnarKeyBlockData;
-
-    }
-
-    /**
-     * getMapOfColumnarKeyBlockDataForDirectSurroagtes.
-     *
-     * @return
-     */
-    public Map<Integer, byte[]> getMapOfColumnarKeyBlockDataForDirectSurroagtes() {
-        return mapOfColumnarKeyBlockData;
-    }
 }

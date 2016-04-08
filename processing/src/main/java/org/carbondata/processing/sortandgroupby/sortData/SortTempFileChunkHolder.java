@@ -321,11 +321,11 @@ public class SortTempFileChunkHolder {
             }
 
             //Complex Type ByteArray to be read and kept for columnar
-            for (int i = 0; i < this.complexDimensionCount; i++) {
+           /* for (int i = 0; i < this.complexDimensionCount; i++) {
                 byte[] complexArray = new byte[stream.readInt()];
                 stream.read(complexArray);
                 holder[index++] = complexArray;
-            }
+            }*/
             if (this.highCardinalityCount > 0) {
                 short lengthOfByteArray = stream.readShort();
                 ByteBuffer buff = ByteBuffer.allocate(lengthOfByteArray + 2);

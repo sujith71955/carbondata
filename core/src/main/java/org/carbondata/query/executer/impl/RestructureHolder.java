@@ -32,8 +32,13 @@ public class RestructureHolder {
      *
      */
     public boolean updateRequired;
-
     /**
+     * 
+     */
+    private boolean[] isHighCardinalityNewDims;
+
+
+	/**
      *
      */
     public SliceMetaData metaData;
@@ -108,4 +113,18 @@ public class RestructureHolder {
     public void setKeyGenerator(KeyGenerator keyGenerator) {
         this.keyGenerator = keyGenerator;
     }
+    /*
+     * get the new high cardinality dims as part of restructure.
+     */
+    public boolean[] getIsHighCardinalityNewDims() {
+		return isHighCardinalityNewDims;
+	}
+
+    /**
+     * setting the new high cardinality dims as part of restructure
+     * @param isHighCardinalityNewDims
+     */
+	public void setIsHighCardinalityNewDims(boolean[] isHighCardinalityNewDims) {
+		this.isHighCardinalityNewDims = isHighCardinalityNewDims;
+	}
 }

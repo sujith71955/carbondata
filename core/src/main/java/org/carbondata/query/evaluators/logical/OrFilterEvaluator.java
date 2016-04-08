@@ -32,9 +32,9 @@ public class OrFilterEvaluator extends AbstractLogicalFilterEvaluator {
 
     @Override
     public BitSet applyFilter(BlockDataHolder blockDataHolder,
-            FilterProcessorPlaceHolder placeHolder) {
-        BitSet leftFilters = leftEvalutor.applyFilter(blockDataHolder, placeHolder);
-        BitSet rightFilters = rightEvalutor.applyFilter(blockDataHolder, placeHolder);
+            FilterProcessorPlaceHolder placeHolder,int [] directSurrogates) {
+        BitSet leftFilters = leftEvalutor.applyFilter(blockDataHolder, placeHolder,directSurrogates);
+        BitSet rightFilters = rightEvalutor.applyFilter(blockDataHolder, placeHolder,directSurrogates);
         leftFilters.or(rightFilters);
         return leftFilters;
     }

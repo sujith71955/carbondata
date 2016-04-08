@@ -135,7 +135,7 @@ public class RowLevelFilterEvalutor extends AbstractConditionalEvalutor {
 
     @Override
     public BitSet applyFilter(BlockDataHolder blockDataHolder,
-            FilterProcessorPlaceHolder placeHolder) {
+            FilterProcessorPlaceHolder placeHolder,int[] directSurrogates) {
         for (DimColumnEvaluatorInfo dimColumnEvaluatorInfo : dimColEvaluatorInfoList) {
             if (dimColumnEvaluatorInfo.getDims().getDataType() != Type.ARRAY
                     && dimColumnEvaluatorInfo.getDims().getDataType() != Type.STRUCT) {
@@ -144,7 +144,7 @@ public class RowLevelFilterEvalutor extends AbstractConditionalEvalutor {
                     blockDataHolder.getColumnarKeyStore()[dimColumnEvaluatorInfo.getColumnIndex()] =
                             blockDataHolder.getLeafDataBlock()
                                     .getColumnarKeyStore(blockDataHolder.getFileHolder(),
-                                            dimColumnEvaluatorInfo.getColumnIndex(), false);
+                                            dimColumnEvaluatorInfo.getColumnIndex(), false,directSurrogates);
                 } else {
                     if (!blockDataHolder.getColumnarKeyStore()[dimColumnEvaluatorInfo
                             .getColumnIndex()].getColumnarKeyStoreMetadata().isUnCompressed()) {
@@ -209,8 +209,8 @@ public class RowLevelFilterEvalutor extends AbstractConditionalEvalutor {
                     ColumnarKeyStoreDataHolder columnarKeyStoreDataHolder =
                             blockDataHolder.getColumnarKeyStore()[dimColumnEvaluatorInfo
                                     .getColumnIndex()];
-                    if (null != columnarKeyStoreDataHolder.getColumnarKeyStoreMetadata()
-                            .getMapOfColumnarKeyBlockDataForDirectSurroagtes()) {
+                    if (null != columnarKeyStoreDataHolder.getDirectSurrogateBasedKeyBlockData()
+                            ) {
                         Member member = readMemberBasedOnDirectSurrogate(dimColumnEvaluatorInfo,
                                 columnarKeyStoreDataHolder, index);
                         if (null != member) {
@@ -335,22 +335,23 @@ public class RowLevelFilterEvalutor extends AbstractConditionalEvalutor {
      * @return
      */
     private Member readMemberBasedOnDirectSurrogate(DimColumnEvaluatorInfo dimColumnEvaluatorInfo,
-            ColumnarKeyStoreDataHolder columnarKeyStoreDataHolder, int index) {
-        byte[] directSurrogates;
-        if (null != columnarKeyStoreDataHolder.getColumnarKeyStoreMetadata()
-                .getColumnReverseIndex()) {
-            // Getting the data for direct surrogates.
-            directSurrogates = columnarKeyStoreDataHolder.getColumnarKeyStoreMetadata()
-                    .getMapOfColumnarKeyBlockDataForDirectSurroagtes()
-                    .get(columnarKeyStoreDataHolder.getColumnarKeyStoreMetadata()
-                            .getColumnReverseIndex()[index]);
-        } else {
-            directSurrogates = columnarKeyStoreDataHolder.getColumnarKeyStoreMetadata()
-                    .getMapOfColumnarKeyBlockDataForDirectSurroagtes().get(index);
-        }
-        Member member = new Member(directSurrogates);
-        return member;
-    }
+			ColumnarKeyStoreDataHolder columnarKeyStoreDataHolder, int index) {
+		byte[] directSurrogates;
+		if (null != columnarKeyStoreDataHolder.getColumnarKeyStoreMetadata()
+				.getColumnReverseIndex()) {
+			// Getting the data for direct surrogates.
+			directSurrogates = columnarKeyStoreDataHolder
+					.getDirectSurrogateBasedKeyBlockData().get(
+							columnarKeyStoreDataHolder
+									.getColumnarKeyStoreMetadata()
+									.getColumnReverseIndex()[index]);
+		} else {
+			directSurrogates = columnarKeyStoreDataHolder
+					.getDirectSurrogateBasedKeyBlockData().get(index);
+		}
+		Member member = new Member(directSurrogates);
+		return member;
+	}
 
     @Override
     public BitSet isScanRequired(byte[][] blockMaxValue, byte[][] blockMinValue) {

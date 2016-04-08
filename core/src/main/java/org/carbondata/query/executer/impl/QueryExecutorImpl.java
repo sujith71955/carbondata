@@ -350,6 +350,7 @@ public class QueryExecutorImpl extends AbstractQueryExecutor {
         info.setKeyGenerator(slice.getKeyGenerator(queryModel.getFactTable()));
         info.setQueryDimensions(queryDimensions);
         info.setDimensions(currentDimTables);
+        info.setCurrentDimTables(currentDimTables);
         info.setMeasureOrdinal(measureOrdinal);
         info.setCubeName(executerProperties.cubeName);
         info.setPartitionId(queryModel.getPartitionId());
