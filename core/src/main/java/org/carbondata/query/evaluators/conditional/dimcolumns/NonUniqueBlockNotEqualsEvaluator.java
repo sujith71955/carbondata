@@ -20,6 +20,8 @@
 package org.carbondata.query.evaluators.conditional.dimcolumns;
 
 import java.util.BitSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.carbondata.core.datastorage.store.columnar.ColumnarKeyStoreDataHolder;
@@ -38,14 +40,14 @@ public class NonUniqueBlockNotEqualsEvaluator extends AbstractConditionalEvaluto
 
     @Override
     public BitSet applyFilter(BlockDataHolder blockDataHolderArray,
-            FilterProcessorPlaceHolder placeHolder) {
+            FilterProcessorPlaceHolder placeHolder,int[] directSurrogates) {
         if (null == blockDataHolderArray.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0)
                 .getColumnIndex()]) {
             blockDataHolderArray.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0)
                     .getColumnIndex()] = blockDataHolderArray.getLeafDataBlock()
                     .getColumnarKeyStore(blockDataHolderArray.getFileHolder(),
                             dimColEvaluatorInfoList.get(0).getColumnIndex(),
-                            dimColEvaluatorInfoList.get(0).isNeedCompressedData());
+                            dimColEvaluatorInfoList.get(0).isNeedCompressedData(),directSurrogates);
         }
         return getFilteredIndexes(
                 blockDataHolderArray.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0)
@@ -67,20 +69,19 @@ public class NonUniqueBlockNotEqualsEvaluator extends AbstractConditionalEvaluto
             int numerOfRows) {
         BitSet bitSet = new BitSet(numerOfRows);
         bitSet.flip(0, numerOfRows);
-        Map<Integer, byte[]> mapOfColumnarKeyBlockDataForDirectSurroagtes =
-                keyBlockArray.getColumnarKeyStoreMetadata()
-                        .getMapOfColumnarKeyBlockDataForDirectSurroagtes();
+        List<byte[]> listOfColumnarKeyBlockDataForDirectSurroagtes =
+                keyBlockArray.getDirectSurrogateBasedKeyBlockData();
         byte[][] filterValues = dimColEvaluatorInfoList.get(0).getFilterValues();
         int[] columnIndexArray = keyBlockArray.getColumnarKeyStoreMetadata().getColumnIndex();
         int[] columnReverseIndexArray =
                 keyBlockArray.getColumnarKeyStoreMetadata().getColumnReverseIndex();
         for (int i = 0; i < filterValues.length; i++) {
             byte[] filterVal = filterValues[i];
-            if (null != mapOfColumnarKeyBlockDataForDirectSurroagtes) {
+            if (null != listOfColumnarKeyBlockDataForDirectSurroagtes) {
 
                 if (null != columnReverseIndexArray) {
                     for (int index : columnIndexArray) {
-                        byte[] directSurrogate = mapOfColumnarKeyBlockDataForDirectSurroagtes
+                        byte[] directSurrogate = listOfColumnarKeyBlockDataForDirectSurroagtes
                                 .get(columnReverseIndexArray[index]);
                         if (ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterVal, directSurrogate)
                                 == 0) {
@@ -90,13 +91,28 @@ public class NonUniqueBlockNotEqualsEvaluator extends AbstractConditionalEvaluto
                 } else if (null != columnIndexArray) {
 
                     for (int index : columnIndexArray) {
-                        byte[] directSurrogate = mapOfColumnarKeyBlockDataForDirectSurroagtes
+                        byte[] directSurrogate = listOfColumnarKeyBlockDataForDirectSurroagtes
                                 .get(columnIndexArray[index]);
                         if (ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterVal, directSurrogate)
                                 == 0) {
                             bitSet.flip(index);
                         }
                     }
+                    
+                }
+                else
+                {
+                	Iterator<byte[]> itr=listOfColumnarKeyBlockDataForDirectSurroagtes.iterator();
+                	int index=0;
+                	while(itr.hasNext())
+                	{
+                		 if (ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterVal, itr.next())
+                                 == 0) {
+                             bitSet.flip(index++);
+                         }
+                		
+                	}
+                	
                 }
 
             }

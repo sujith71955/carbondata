@@ -1045,7 +1045,7 @@ private[sql] case class AlterCube(
     //CubeProcessor by default adds a DEFAULT_INVISIBLE_DUMMY_MEASURE.This is required for CreateCube but not for adding a
     //new measure.Hence after forming the measures object, we remove it from the list
     cubeXML.measures = cubeXML.measures.filter { x => x.name != CarbonCommonConstants.DEFAULT_INVISIBLE_DUMMY_MEASURE }
-    addNewDimensionsToCube(cubeXML, cube)
+    addNewDimensionsToCube(cubeXML, cube,cm.highcardinalitydims.get)
 
     cubeXML
   }
@@ -1062,7 +1062,7 @@ private[sql] case class AlterCube(
     }.toArray
   }
 
-  private def addNewDimensionsToCube(cubeXML: CarbonDef.Cube, cube: Cube) {
+  private def addNewDimensionsToCube(cubeXML: CarbonDef.Cube, cube: Cube,highCardDims:Seq[String]) {
     cubeXML.dimensions = cube.dimensions.map { dim =>
       val dimXml = new CarbonDef.Dimension
       dimXml.name = dim.name
@@ -1080,6 +1080,10 @@ private[sql] case class AlterCube(
         hierXml.hasAll = true
         hierXml.visible = true
         hierXml.normalized = false
+        if(highCardDims.contains(dim.name))
+        {
+          dimXml.highCardinality=true
+        }
         hier.tableName match {
           case Some(tble: String) =>
             val table = new CarbonDef.Table

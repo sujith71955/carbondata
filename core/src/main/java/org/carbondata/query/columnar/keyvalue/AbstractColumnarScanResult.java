@@ -149,22 +149,19 @@ public abstract class AbstractColumnarScanResult {
     private void updateByteArrayWithDirectSurrogateKeyVal(ByteArrayWrapper key, int colIndex,
             ColumnarKeyStoreDataHolder columnarKeyStoreDataHolder) {
 
-        Map<Integer, byte[]> mapOfColumnarKeyBlockDataForDirectSurroagtes =
-                columnarKeyStoreDataHolder.getColumnarKeyStoreMetadata()
-                        .getMapOfColumnarKeyBlockDataForDirectSurroagtes();
-        int[] columnIndexArray =
-                columnarKeyStoreDataHolder.getColumnarKeyStoreMetadata().getColumnIndex();
+        List<byte[]> listOfColumnarKeyBlockDataForDirectSurroagtes =
+                columnarKeyStoreDataHolder.getDirectSurrogateBasedKeyBlockData();
         int[] columnReverseIndexArray =
                 columnarKeyStoreDataHolder.getColumnarKeyStoreMetadata().getColumnReverseIndex();
 
-        if (null != mapOfColumnarKeyBlockDataForDirectSurroagtes) {
+        if (null != listOfColumnarKeyBlockDataForDirectSurroagtes) {
             if (null != columnReverseIndexArray) {
 
-                key.addToDirectSurrogateKeyList(mapOfColumnarKeyBlockDataForDirectSurroagtes
+                key.addToDirectSurrogateKeyList(listOfColumnarKeyBlockDataForDirectSurroagtes
                         .get(columnReverseIndexArray[colIndex]));
             } else {
                 key.addToDirectSurrogateKeyList(
-                        mapOfColumnarKeyBlockDataForDirectSurroagtes.get(colIndex));
+                  listOfColumnarKeyBlockDataForDirectSurroagtes.get(colIndex));
             }
 
         }

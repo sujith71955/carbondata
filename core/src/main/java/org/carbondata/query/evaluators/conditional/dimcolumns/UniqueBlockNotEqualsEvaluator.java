@@ -35,19 +35,19 @@ public class UniqueBlockNotEqualsEvaluator extends NonUniqueBlockNotEqualsEvalua
 
     @Override
     public BitSet applyFilter(BlockDataHolder blockDataHolder,
-            FilterProcessorPlaceHolder placeHolder) {
+            FilterProcessorPlaceHolder placeHolder,int[] directSurrogates) {
         if (null == blockDataHolder.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0)
                 .getColumnIndex()]) {
             blockDataHolder.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0).getColumnIndex()] =
                     blockDataHolder.getLeafDataBlock()
                             .getColumnarKeyStore(blockDataHolder.getFileHolder(),
                                     dimColEvaluatorInfoList.get(0).getColumnIndex(),
-                                    dimColEvaluatorInfoList.get(0).isNeedCompressedData());
+                                    dimColEvaluatorInfoList.get(0).isNeedCompressedData(),directSurrogates);
         }
 
         if (blockDataHolder.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0).getColumnIndex()]
                 .getColumnarKeyStoreMetadata().isUnCompressed()) {
-            return super.applyFilter(blockDataHolder, placeHolder);
+            return super.applyFilter(blockDataHolder, placeHolder,directSurrogates);
         }
         return getFilteredIndexes(
                 blockDataHolder.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0)

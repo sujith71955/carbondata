@@ -217,7 +217,7 @@ public class CarbonColumnarLeafNodeIterator implements CarbonIterator<AbstractCo
         this.keyValue.setNumberOfRows(this.entryCount);
         this.keyValue.setMeasureBlock(this.dataStore.getValues());
         ColumnarKeyStoreDataHolder[] unCompressedKeyArray =
-                keyStore.getUnCompressedKeyArray(fileHolder, blockIndexes, needCompressedData);
+                keyStore.getUnCompressedKeyArray(fileHolder, blockIndexes, needCompressedData,null);
 
         for (int i = 0; i < unCompressedKeyArray.length; i++) {
             if (this.isUniqueBlock[blockIndexes[i]]) {

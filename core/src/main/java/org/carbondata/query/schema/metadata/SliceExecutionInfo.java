@@ -328,8 +328,14 @@ public class SliceExecutionInfo {
 
     private Dimension[] dimensions;
     private Map<Integer, GenericQueryType> complexQueryDimensions;
+    /**
+     * 
+     * @return
+     */
+    private Dimension[] currentDimTables;
+    
 
-    public Dimension[] getDimensions() {
+	public Dimension[] getDimensions() {
         return dimensions;
     }
 
@@ -1054,4 +1060,20 @@ public class SliceExecutionInfo {
     public void setMeasureOrdinalMap(HashMap<Integer, Integer> measureOrdinal) {
         this.measureOrdinalMap = measureOrdinal;
     }
+    
+    /**
+     * return the dimension with respect to the fact table.
+     * @return
+     */
+    public Dimension[] getCurrentDimTables() {
+		return currentDimTables;
+	}
+
+    /**
+     * set the dimensions with respect to the current fact table.
+     * @param currentDimTables
+     */
+	public void setCurrentDimTables(Dimension[] currentDimTables) {
+		this.currentDimTables = currentDimTables;
+	}
 }

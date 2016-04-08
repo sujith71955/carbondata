@@ -140,6 +140,15 @@ public class MapBasedResultAggregatorImpl implements ColumnarScannedResultAggreg
                         && restructureHolder.metaData.getNewDimsDefVals().length > 0) {
                     for (int i = 0;
                          i < restructureHolder.metaData.getNewDimsDefVals().length; i++) {
+                      if(restructureHolder.getIsHighCardinalityNewDims()[i])
+                      {
+                        key.addToDirectSurrogateKeyList(restructureHolder.metaData.getNewDimsDefVals()[i].getBytes());
+                      }
+                      else
+                      {
+                        updatedData[data.length + i] =
+                                restructureHolder.metaData.getNewDimsSurrogateKeys()[i];
+                      }
                         updatedData[data.length + i] =
                                 restructureHolder.metaData.getNewDimsSurrogateKeys()[i];
                     }

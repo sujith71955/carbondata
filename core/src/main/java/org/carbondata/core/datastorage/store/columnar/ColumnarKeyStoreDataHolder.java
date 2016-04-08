@@ -20,15 +20,21 @@
 package org.carbondata.core.datastorage.store.columnar;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public class ColumnarKeyStoreDataHolder {
     private byte[] keyblockData;
-
-    private ColumnarKeyStoreMetadata columnarKeyStoreMetadata;
-
+    private List<byte[]> directSurrogateBasedKeyBlockData;
+	private ColumnarKeyStoreMetadata columnarKeyStoreMetadata;
     public ColumnarKeyStoreDataHolder(final byte[] keyblockData,
             final ColumnarKeyStoreMetadata columnarKeyStoreMetadata) {
         this.keyblockData = keyblockData;
+        this.columnarKeyStoreMetadata = columnarKeyStoreMetadata;
+    }
+    //Added constructor for holding directSurrogateBasedKeyBlockData
+    public ColumnarKeyStoreDataHolder(final List<byte[]> directSurrogateBasedKeyBlockData,
+            final ColumnarKeyStoreMetadata columnarKeyStoreMetadata) {
+        this.directSurrogateBasedKeyBlockData = directSurrogateBasedKeyBlockData;
         this.columnarKeyStoreMetadata = columnarKeyStoreMetadata;
     }
 
@@ -67,4 +73,23 @@ public class ColumnarKeyStoreDataHolder {
                 columnarKeyStoreMetadata.getEachRowSize());
         return ByteBuffer.wrap(actual).getInt();
     }
+    
+    /**
+     * @author s71955
+     * get the byte[] for high cardinality column block
+     * @return List<byte[]>.
+     */
+    public List<byte[]> getDirectSurrogateBasedKeyBlockData() {
+		return directSurrogateBasedKeyBlockData;
+	}
+
+    /**
+     * @author s71955
+     * set the byte[] for high cardinality column block
+     * @param directSurrogateBasedKeyBlockData
+     */
+	public void setDirectSurrogateBasedKeyBlockData(
+			List<byte[]> directSurrogateBasedKeyBlockData) {
+		this.directSurrogateBasedKeyBlockData = directSurrogateBasedKeyBlockData;
+	}
 }

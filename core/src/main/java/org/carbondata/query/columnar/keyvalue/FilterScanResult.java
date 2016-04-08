@@ -1,4 +1,5 @@
 /*
+
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -78,13 +79,13 @@ public class FilterScanResult extends AbstractColumnarScanResult {
     public byte[] getHighCardinalityDimDataForAgg(int dimOrdinal) {
         ColumnarKeyStoreMetadata columnarKeyStoreMetadata =
                 columnarKeyStoreDataHolder[dimOrdinal].getColumnarKeyStoreMetadata();
-        if (null != columnarKeyStoreMetadata.getMapOfColumnarKeyBlockDataForDirectSurroagtes()) {
-            Map<Integer, byte[]> mapOfDirectSurrogates =
-                    columnarKeyStoreMetadata.getMapOfColumnarKeyBlockDataForDirectSurroagtes();
+        List<byte[]> directSurrogatesColumnarBlock=columnarKeyStoreDataHolder[dimOrdinal].getDirectSurrogateBasedKeyBlockData();
+        if (null != directSurrogatesColumnarBlock) {
+            
             if (null == columnarKeyStoreMetadata.getColumnReverseIndex()) {
-                return mapOfDirectSurrogates.get(rowMapping[currentRow]);
+                return directSurrogatesColumnarBlock.get(rowMapping[currentRow]);
             }
-            return mapOfDirectSurrogates
+            return directSurrogatesColumnarBlock
                     .get(columnarKeyStoreMetadata.getColumnReverseIndex()[rowMapping[currentRow]]);
         }
         return null;

@@ -234,8 +234,8 @@ public class CSBTreeColumnarLeafNode extends CSBNode {
 
     @Override
     public ColumnarKeyStoreDataHolder[] getColumnarKeyStore(FileHolder fileHolder, int[] blockIndex,
-            boolean[] needCompressedData) {
-        return keyStore.getUnCompressedKeyArray(fileHolder, blockIndex, needCompressedData);
+            boolean[] needCompressedData,int[] directSurogates) {
+        return keyStore.getUnCompressedKeyArray(fileHolder, blockIndex, needCompressedData,directSurogates);
     }
 
     @Override
@@ -245,8 +245,8 @@ public class CSBTreeColumnarLeafNode extends CSBNode {
 
     @Override
     public ColumnarKeyStoreDataHolder getColumnarKeyStore(FileHolder fileHolder, int blockIndex,
-            boolean needCompressedData) {
-        return keyStore.getUnCompressedKeyArray(fileHolder, blockIndex, needCompressedData);
+            boolean needCompressedData,int[] directSurogates) {
+        return keyStore.getUnCompressedKeyArray(fileHolder, blockIndex, needCompressedData,directSurogates);
     }
 
     @Override

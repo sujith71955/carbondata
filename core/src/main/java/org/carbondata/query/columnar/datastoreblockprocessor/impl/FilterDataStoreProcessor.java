@@ -50,12 +50,12 @@ public class FilterDataStoreProcessor extends AbstractColumnarDataStoreProcessor
                 columnarDataStoreBlockInfo.getDimensionIndexes());
     }
 
-    public AbstractColumnarScanResult getScannedData(BlockDataHolder blockDataHolder) {
-        fillKeyValue(blockDataHolder);
+    public AbstractColumnarScanResult getScannedData(BlockDataHolder blockDataHolder,int[] directSurrogates) {
+        fillKeyValue(blockDataHolder,directSurrogates);
         return keyValue;
     }
 
-    protected void fillKeyValue(BlockDataHolder blockDataHolder) {
+    protected void fillKeyValue(BlockDataHolder blockDataHolder,int[] directSurrogates) {
         keyValue.reset();
         boolean isMinMaxEnabled = true;
         String minMaxEnableValue = CarbonProperties.getInstance().getProperty("carbon.enableMinMax");
@@ -82,7 +82,7 @@ public class FilterDataStoreProcessor extends AbstractColumnarDataStoreProcessor
             }
         }
 
-        BitSet bitSet = filterEvaluatorTree.applyFilter(blockDataHolder, null);
+        BitSet bitSet = filterEvaluatorTree.applyFilter(blockDataHolder, null,directSurrogates);
 
         if (bitSet.isEmpty()) {
             keyValue.setNumberOfRows(0);
@@ -104,7 +104,7 @@ public class FilterDataStoreProcessor extends AbstractColumnarDataStoreProcessor
                     .getAllSelectedDimensions()[i]]) {
                 keyBlocks[i] = blockDataHolder.getLeafDataBlock()
                         .getColumnarKeyStore(columnarDataStoreBlockInfo.getFileHolder(),
-                                columnarDataStoreBlockInfo.getAllSelectedDimensions()[i], false);
+                                columnarDataStoreBlockInfo.getAllSelectedDimensions()[i], false,directSurrogates);
             } else {
                 keyBlocks[i] = blockDataHolder.getColumnarKeyStore()[columnarDataStoreBlockInfo
                         .getAllSelectedDimensions()[i]];

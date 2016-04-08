@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.carbondata.core.metadata.CarbonMetadata.Dimension;
 import org.carbondata.core.metadata.CarbonMetadata.Measure;
 import org.carbondata.core.metadata.SliceMetaData;
@@ -50,19 +51,11 @@ public final class RestructureUtil {
         boolean found/* = false*/;
         int len = 0;
         String[] sMetaDims = sliceMataData.getDimensions();
-        //        Set<String> queryDimGroup = new LinkedHashSet<String>();
-        //        for(Dimension dim : queryDims)
-        //        {
-        //            queryDimGroup.add(dim.getHierName());
-        //        }
-        //        Dimension[] currentDimTables = new Dimension[sMetaDims.length];
+        //if high
+        List<Boolean> isHighCardinalityDims=new ArrayList<Boolean>(executerProperties.dimTables.length);
+        boolean[] isHighCardinalityDimsArray=new boolean[executerProperties.dimTables.length];
         List<Dimension> crntDims = new ArrayList<Dimension>();
         for (int i = 0; i < executerProperties.dimTables.length; i++) {
-            if (executerProperties.dimTables[i].isHighCardinalityDim()) {
-                crntDims.add(executerProperties.dimTables[i]);
-                continue;
-            }
-
             found = false;
             for (int j = 0; j < sMetaDims.length; j++) {
                 if (sMetaDims[j].equals(executerProperties.dimTables[i].getActualTableName() + '_'
@@ -78,6 +71,10 @@ public final class RestructureUtil {
 
             if (!found) {
                 holder.updateRequired = true;
+                if(executerProperties.dimTables[i].isHighCardinalityDim())
+                {
+                	isHighCardinalityDims.add(true);
+                }
             }
 
         }
@@ -96,6 +93,11 @@ public final class RestructureUtil {
                 }
             }
             len++;
+        }
+        if(holder.updateRequired)
+        {
+        	isHighCardinalityDimsArray=ArrayUtils.toPrimitive(isHighCardinalityDims.toArray(new Boolean[isHighCardinalityDims.size()]));
+        	holder.setIsHighCardinalityNewDims(isHighCardinalityDimsArray);
         }
         return crntDims.toArray(new Dimension[crntDims.size()]);
     }

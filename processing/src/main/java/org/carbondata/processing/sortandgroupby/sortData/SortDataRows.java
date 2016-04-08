@@ -515,11 +515,11 @@ public class SortDataRows {
                     //                	stream.writeInt((Integer)row[fieldIndex++]);
                 }
 
-                for (int dimCount = 0; dimCount < this.complexDimColCount; dimCount++) {
+               /* for (int dimCount = 0; dimCount < this.complexDimColCount; dimCount++) {
                     int complexByteArrayLength = ((byte[]) row[fieldIndex]).length;
                     stream.writeInt(complexByteArrayLength);
                     stream.write(((byte[]) row[fieldIndex++]));
-                }
+                }*/
 
                 // if any high cardinality dims are present then write it to the file.
                 if (this.highCardinalityCount > 0) {

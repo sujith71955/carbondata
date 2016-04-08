@@ -20,7 +20,8 @@
 package org.carbondata.query.evaluators.conditional.dimcolumns;
 
 import java.util.BitSet;
-import java.util.Map;
+import java.util.Iterator;
+import java.util.List;
 
 import org.carbondata.core.datastorage.store.columnar.ColumnarKeyStoreDataHolder;
 import org.carbondata.core.util.ByteUtil;
@@ -39,14 +40,14 @@ public class NonUniqueBlockEqualsEvalutor extends AbstractConditionalEvalutor {
 
     @Override
     public BitSet applyFilter(BlockDataHolder blockDataHolder,
-            FilterProcessorPlaceHolder placeHolder) {
+            FilterProcessorPlaceHolder placeHolder,int[] directSurrogates) {
         if (null == blockDataHolder.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0)
                 .getColumnIndex()]) {
             blockDataHolder.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0).getColumnIndex()] =
                     blockDataHolder.getLeafDataBlock()
                             .getColumnarKeyStore(blockDataHolder.getFileHolder(),
                                     dimColEvaluatorInfoList.get(0).getColumnIndex(),
-                                    dimColEvaluatorInfoList.get(0).isNeedCompressedData());
+                                    dimColEvaluatorInfoList.get(0).isNeedCompressedData(),directSurrogates);
         }
         return getFilteredIndexes(
                 blockDataHolder.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0)
@@ -66,20 +67,19 @@ public class NonUniqueBlockEqualsEvalutor extends AbstractConditionalEvalutor {
     private BitSet setDirectKeyFilterIndexToBitSet(ColumnarKeyStoreDataHolder keyBlockArray,
             int numerOfRows) {
         BitSet bitSet = new BitSet(numerOfRows);
-        Map<Integer, byte[]> mapOfColumnarKeyBlockDataForDirectSurroagtes =
-                keyBlockArray.getColumnarKeyStoreMetadata()
-                        .getMapOfColumnarKeyBlockDataForDirectSurroagtes();
+        List <byte[]> listOfColumnarKeyBlockDataForDirectSurroagtes =
+                keyBlockArray.getDirectSurrogateBasedKeyBlockData();
         byte[][] filterValues = dimColEvaluatorInfoList.get(0).getFilterValues();
         int[] columnIndexArray = keyBlockArray.getColumnarKeyStoreMetadata().getColumnIndex();
         int[] columnReverseIndexArray =
                 keyBlockArray.getColumnarKeyStoreMetadata().getColumnReverseIndex();
         for (int i = 0; i < filterValues.length; i++) {
             byte[] filterVal = filterValues[i];
-            if (null != mapOfColumnarKeyBlockDataForDirectSurroagtes) {
+            if (null != listOfColumnarKeyBlockDataForDirectSurroagtes) {
 
                 if (null != columnIndexArray) {
                     for (int index : columnIndexArray) {
-                        byte[] directSurrogate = mapOfColumnarKeyBlockDataForDirectSurroagtes
+                        byte[] directSurrogate = listOfColumnarKeyBlockDataForDirectSurroagtes
                                 .get(columnReverseIndexArray[index]);
                         if (ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterVal, directSurrogate)
                                 == 0) {
@@ -89,13 +89,26 @@ public class NonUniqueBlockEqualsEvalutor extends AbstractConditionalEvalutor {
                 } else if (null != columnReverseIndexArray) {
 
                     for (int index : columnReverseIndexArray) {
-                        byte[] directSurrogate = mapOfColumnarKeyBlockDataForDirectSurroagtes
+                        byte[] directSurrogate = listOfColumnarKeyBlockDataForDirectSurroagtes
                                 .get(columnReverseIndexArray[index]);
                         if (ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterVal, directSurrogate)
                                 == 0) {
                             bitSet.set(index);
                         }
                     }
+                }
+                else
+                {
+                	Iterator<byte[]> itr=listOfColumnarKeyBlockDataForDirectSurroagtes.iterator();
+                	int index=0;
+                	while(itr.hasNext())
+                	{
+                		 if (ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterVal, itr.next())
+                                 == 0) {
+                             bitSet.set(index++);
+                         }
+                		
+                	}
                 }
 
             }
