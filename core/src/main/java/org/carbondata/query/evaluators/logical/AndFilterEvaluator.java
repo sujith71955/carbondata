@@ -33,12 +33,12 @@ public class AndFilterEvaluator extends AbstractLogicalFilterEvaluator {
 
     @Override
     public BitSet applyFilter(BlockDataHolder blockDataHolder,
-            FilterProcessorPlaceHolder placeHolder,int[] directSurrogates) {
-        BitSet leftFilters = leftEvalutor.applyFilter(blockDataHolder, placeHolder,directSurrogates);
+            FilterProcessorPlaceHolder placeHolder,int[] noDictionaryColIndexes) {
+        BitSet leftFilters = leftEvalutor.applyFilter(blockDataHolder, placeHolder,noDictionaryColIndexes);
         if (leftFilters.isEmpty()) {
             return leftFilters;
         }
-        BitSet rightFilter = rightEvalutor.applyFilter(blockDataHolder, placeHolder,directSurrogates);
+        BitSet rightFilter = rightEvalutor.applyFilter(blockDataHolder, placeHolder,noDictionaryColIndexes);
         if (rightFilter.isEmpty()) {
             return rightFilter;
         }

@@ -80,7 +80,7 @@ public class ExpressionAggregator {
                     }
                 } else if (dimension.isHighCardinalityDim()) {
                     byte[] directSurrogate =
-                            keyValue.getHighCardinalityDimDataForAgg(dimension.getOrdinal());
+                            keyValue.getNo_DictionayDimDataForAgg(dimension.getOrdinal());
                     row[j] = DataTypeConverter.getDataBasedOnDataType(new String(directSurrogate),
                             dimension.getDataType());
                 } else {

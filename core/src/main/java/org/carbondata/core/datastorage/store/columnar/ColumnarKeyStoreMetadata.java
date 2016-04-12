@@ -19,8 +19,6 @@
 
 package org.carbondata.core.datastorage.store.columnar;
 
-import java.util.List;
-
 import org.carbondata.core.keygenerator.KeyGenerator;
 import org.carbondata.core.keygenerator.factory.KeyGeneratorFactory;
 
@@ -138,6 +136,7 @@ public class ColumnarKeyStoreMetadata {
      */
     public boolean isDirectSurrogateColumn() {
         return isDirectSurrogateColumn;
+        
     }
 
     /**

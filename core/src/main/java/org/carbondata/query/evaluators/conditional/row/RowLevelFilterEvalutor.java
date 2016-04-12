@@ -135,7 +135,7 @@ public class RowLevelFilterEvalutor extends AbstractConditionalEvalutor {
 
     @Override
     public BitSet applyFilter(BlockDataHolder blockDataHolder,
-            FilterProcessorPlaceHolder placeHolder,int[] directSurrogates) {
+            FilterProcessorPlaceHolder placeHolder,int[] noDictionaryColIndexes) {
         for (DimColumnEvaluatorInfo dimColumnEvaluatorInfo : dimColEvaluatorInfoList) {
             if (dimColumnEvaluatorInfo.getDims().getDataType() != Type.ARRAY
                     && dimColumnEvaluatorInfo.getDims().getDataType() != Type.STRUCT) {
@@ -144,7 +144,7 @@ public class RowLevelFilterEvalutor extends AbstractConditionalEvalutor {
                     blockDataHolder.getColumnarKeyStore()[dimColumnEvaluatorInfo.getColumnIndex()] =
                             blockDataHolder.getLeafDataBlock()
                                     .getColumnarKeyStore(blockDataHolder.getFileHolder(),
-                                            dimColumnEvaluatorInfo.getColumnIndex(), false,directSurrogates);
+                                            dimColumnEvaluatorInfo.getColumnIndex(), false,noDictionaryColIndexes);
                 } else {
                     if (!blockDataHolder.getColumnarKeyStore()[dimColumnEvaluatorInfo
                             .getColumnIndex()].getColumnarKeyStoreMetadata().isUnCompressed()) {

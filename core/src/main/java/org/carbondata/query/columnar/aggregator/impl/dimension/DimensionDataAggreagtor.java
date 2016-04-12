@@ -259,9 +259,9 @@ public class DimensionDataAggreagtor {
         if (null == dimensionsRowWrapper.getDirectSurrogateKeyList() || dimensionsRowWrapper
                 .getDirectSurrogateKeyList().isEmpty()) {
             dimensionsRowWrapper.addToDirectSurrogateKeyList(
-                    keyValue.getHighCardinalityDimDataForAgg(dim.getOrdinal()));
+                    keyValue.getNo_DictionayDimDataForAgg(dim.getOrdinal()));
         }
-        String data = new String(keyValue.getHighCardinalityDimDataForAgg(dim.getOrdinal()));
+        String data = new String(keyValue.getNo_DictionayDimDataForAgg(dim.getOrdinal()));
         if (CarbonCommonConstants.MEMBER_DEFAULT_VAL.equals(data)) {
             return;
         }
@@ -281,7 +281,7 @@ public class DimensionDataAggreagtor {
         for (int j = 0; j < dimAggNormalIndex[index].length; j++) {
             if (dataBasedOnDataType == null) {
                 dataBasedOnDataType =
-                        new Member(keyValue.getHighCardinalityDimDataForAgg(dim.getOrdinal()));
+                        new Member(keyValue.getNo_DictionayDimDataForAgg(dim.getOrdinal()));
             }
             // Do not convert to double as the aggregator may work on
             // different data types. Min & Max can work for String,

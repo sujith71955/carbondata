@@ -38,7 +38,7 @@ public class CompressedColumnarInMemoryStore extends AbstractColumnarKeyStore {
 
     @Override
     public ColumnarKeyStoreDataHolder[] getUnCompressedKeyArray(FileHolder fileHolder,
-            int[] blockIndex, boolean[] needCompressedData,int[] directSurrogates) {
+            int[] blockIndex, boolean[] needCompressedData,int[] noDictionaryColIndexes) {
         ColumnarKeyStoreDataHolder[] columnarKeyStoreDataHolders =
                 new ColumnarKeyStoreDataHolder[blockIndex.length];
         for (int i = 0; i < columnarKeyStoreDataHolders.length; i++) {
@@ -50,7 +50,7 @@ public class CompressedColumnarInMemoryStore extends AbstractColumnarKeyStore {
             int[] dataIndex = null;
             boolean isUnCompressed = true;
             columnarKeyBlockDataTemp = COMPRESSOR.unCompress(columnarKeyBlockData[blockIndex[i]]);
-            boolean isHighCardinalityBlock=CompressedColumnarKeyStoreUtil.isHighCardinalityBlock(directSurrogates, blockIndex[i]);
+            boolean isHighCardinalityBlock=CompressedColumnarKeyStoreUtil.isNoDictionaryBlock(noDictionaryColIndexes, blockIndex[i]);
             if (!isHighCardinalityBlock && this.columnarStoreInfo.getAggKeyBlock()[blockIndex[i]]) {
                 dataIndex = columnarStoreInfo.getNumberCompressor().unCompress(
                         columnarUniqueblockKeyBlockIndex[mapOfAggDataIndex.get(blockIndex[i])]);
@@ -111,7 +111,7 @@ public class CompressedColumnarInMemoryStore extends AbstractColumnarKeyStore {
         int[] dataIndex = null;
         boolean isUnCompressed = true;
         columnarKeyBlockDataTemp = COMPRESSOR.unCompress(columnarKeyBlockData[blockIndex]);
-        boolean isHighCardinalityBlock=CompressedColumnarKeyStoreUtil.isHighCardinalityBlock(directSurrogates,blockIndex);
+        boolean isHighCardinalityBlock=CompressedColumnarKeyStoreUtil.isNoDictionaryBlock(directSurrogates,blockIndex);
         if (!isHighCardinalityBlock && this.columnarStoreInfo.getAggKeyBlock()[blockIndex]) {
             dataIndex = columnarStoreInfo.getNumberCompressor().unCompress(
                     columnarUniqueblockKeyBlockIndex[mapOfAggDataIndex.get(blockIndex)]);

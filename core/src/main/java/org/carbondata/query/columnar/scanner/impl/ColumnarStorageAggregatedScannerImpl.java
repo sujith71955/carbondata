@@ -26,7 +26,7 @@ import org.carbondata.query.columnar.scanner.AbstractColumnarStorageScanner;
 import org.carbondata.query.schema.metadata.ColumnarStorageScannerInfo;
 
 public class ColumnarStorageAggregatedScannerImpl extends AbstractColumnarStorageScanner {
-  private int[] directSurrogateIndexes;
+  private int[] noDictionaryColIndexes;
     public ColumnarStorageAggregatedScannerImpl(
             ColumnarStorageScannerInfo columnarStorageScannerInfo) {
         super(columnarStorageScannerInfo);
@@ -36,9 +36,9 @@ public class ColumnarStorageAggregatedScannerImpl extends AbstractColumnarStorag
                         columnarStorageScannerInfo.getColumnarAggregatorInfo()));
     }
     public ColumnarStorageAggregatedScannerImpl(
-            ColumnarStorageScannerInfo columnarStorageScannerInfo,int [] directSurrogateIndexes) {
+            ColumnarStorageScannerInfo columnarStorageScannerInfo,int [] noDictionaryColIndexes) {
           this(columnarStorageScannerInfo);
-          this.directSurrogateIndexes=directSurrogateIndexes;
+          this.noDictionaryColIndexes=noDictionaryColIndexes;
           
         }
     @Override
@@ -48,7 +48,7 @@ public class ColumnarStorageAggregatedScannerImpl extends AbstractColumnarStorag
             addToQueryStats(blockDataHolder);
             blockDataHolder.reset();
             AbstractColumnarScanResult unProcessData =
-                    blockProcessor.getScannedData(blockDataHolder,directSurrogateIndexes);
+                    blockProcessor.getScannedData(blockDataHolder,noDictionaryColIndexes);
             this.columnarAggaregator.aggregateData(unProcessData);
         }
         finish();

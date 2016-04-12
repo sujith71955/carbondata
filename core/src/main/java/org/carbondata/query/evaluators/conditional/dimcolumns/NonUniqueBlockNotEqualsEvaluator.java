@@ -22,7 +22,6 @@ package org.carbondata.query.evaluators.conditional.dimcolumns;
 import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import org.carbondata.core.datastorage.store.columnar.ColumnarKeyStoreDataHolder;
 import org.carbondata.core.util.ByteUtil;
@@ -40,14 +39,14 @@ public class NonUniqueBlockNotEqualsEvaluator extends AbstractConditionalEvaluto
 
     @Override
     public BitSet applyFilter(BlockDataHolder blockDataHolderArray,
-            FilterProcessorPlaceHolder placeHolder,int[] directSurrogates) {
+            FilterProcessorPlaceHolder placeHolder,int[] noDictionaryColIndexes) {
         if (null == blockDataHolderArray.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0)
                 .getColumnIndex()]) {
             blockDataHolderArray.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0)
                     .getColumnIndex()] = blockDataHolderArray.getLeafDataBlock()
                     .getColumnarKeyStore(blockDataHolderArray.getFileHolder(),
                             dimColEvaluatorInfoList.get(0).getColumnIndex(),
-                            dimColEvaluatorInfoList.get(0).isNeedCompressedData(),directSurrogates);
+                            dimColEvaluatorInfoList.get(0).isNeedCompressedData(),noDictionaryColIndexes);
         }
         return getFilteredIndexes(
                 blockDataHolderArray.getColumnarKeyStore()[dimColEvaluatorInfoList.get(0)

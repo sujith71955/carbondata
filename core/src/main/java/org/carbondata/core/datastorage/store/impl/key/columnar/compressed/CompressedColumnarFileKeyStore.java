@@ -37,7 +37,7 @@ public class CompressedColumnarFileKeyStore extends AbstractColumnarKeyStore {
 
     @Override
     public ColumnarKeyStoreDataHolder[] getUnCompressedKeyArray(FileHolder fileHolder,
-            int[] blockIndex, boolean[] needCompressedData,int[] directSurrogates) {
+            int[] blockIndex, boolean[] needCompressedData,int[] noDictionaryColIndexes) {
         ColumnarKeyStoreDataHolder[] columnarKeyStoreDataHolders =
                 new ColumnarKeyStoreDataHolder[blockIndex.length];
 
@@ -53,7 +53,7 @@ public class CompressedColumnarFileKeyStore extends AbstractColumnarKeyStore {
                     .readByteArray(columnarStoreInfo.getFilePath(),
                             columnarStoreInfo.getKeyBlockOffsets()[blockIndex[i]],
                             columnarStoreInfo.getKeyBlockLengths()[blockIndex[i]]));
-            boolean isHighCardinalityBlock=CompressedColumnarKeyStoreUtil.isHighCardinalityBlock(directSurrogates, blockIndex[i]);
+            boolean isHighCardinalityBlock=CompressedColumnarKeyStoreUtil.isNoDictionaryBlock(noDictionaryColIndexes, blockIndex[i]);
             if (!isHighCardinalityBlock
                     && this.columnarStoreInfo.getAggKeyBlock()[blockIndex[i]]) {
                 dataIndex = columnarStoreInfo.getNumberCompressor().unCompress(fileHolder
@@ -114,7 +114,7 @@ public class CompressedColumnarFileKeyStore extends AbstractColumnarKeyStore {
 
     @Override
     public ColumnarKeyStoreDataHolder getUnCompressedKeyArray(FileHolder fileHolder, int blockIndex,
-            boolean needCompressedData,int[] directSurrogates) {
+            boolean needCompressedData,int[] noDictionaryColIndexes) {
         byte[] columnarKeyBlockData = null;
         int[] columnKeyBlockIndex = null;
         int[] columnKeyBlockReverseIndex = null;
@@ -126,7 +126,7 @@ public class CompressedColumnarFileKeyStore extends AbstractColumnarKeyStore {
                 .readByteArray(columnarStoreInfo.getFilePath(),
                         columnarStoreInfo.getKeyBlockOffsets()[blockIndex],
                         columnarStoreInfo.getKeyBlockLengths()[blockIndex]));
-        boolean isHighCardinalityBlock=CompressedColumnarKeyStoreUtil.isHighCardinalityBlock(directSurrogates, blockIndex);
+        boolean isHighCardinalityBlock=CompressedColumnarKeyStoreUtil.isNoDictionaryBlock(noDictionaryColIndexes, blockIndex);
         if (!isHighCardinalityBlock
                 && this.columnarStoreInfo.getAggKeyBlock()[blockIndex]) {
             dataIndex = columnarStoreInfo.getNumberCompressor().unCompress(fileHolder

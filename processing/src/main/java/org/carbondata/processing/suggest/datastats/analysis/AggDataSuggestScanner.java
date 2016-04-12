@@ -130,7 +130,7 @@ public class AggDataSuggestScanner extends AbstractColumnarScanResult {
     }
 
     @Override
-    public byte[] getHighCardinalityDimDataForAgg(int dimOrdinal) {
+    public byte[] getNo_DictionayDimDataForAgg(int dimOrdinal) {
         // TODO Auto-generated method stub
         return null;
     }

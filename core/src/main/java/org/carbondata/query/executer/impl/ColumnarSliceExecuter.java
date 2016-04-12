@@ -63,16 +63,16 @@ public class ColumnarSliceExecuter implements Callable<Void> {
         this.partitionID = StandardLogService.getPartitionID(info.getCubeName());
         this.queryID = info.getQueryId();
         StandardLogService.setThreadName(partitionID, queryID);
-        int [] directSurrogateIndexes=CarbonUtil.getNoDictionaryColIndex(info.getCurrentDimTables());
+        int [] noDictionaryColIndexes=CarbonUtil.getNoDictionaryColIndex(info.getCurrentDimTables());
         if (!info.isDetailQuery()) {
             this.columnarstorageScanner = new ColumnarStorageAggregatedScannerImpl(
                     getColumnarStorageScannerInfo(info, scannedResultProcessor, dataStoreBlock,
                       
-                            numberOfNodesToScan),directSurrogateIndexes);
+                            numberOfNodesToScan),noDictionaryColIndexes);
         } else {
             this.columnarstorageScanner = new ColumnarStorageScannerImpl(
                     getColumnarStorageScannerInfo(info, scannedResultProcessor, dataStoreBlock,
-                            numberOfNodesToScan),directSurrogateIndexes);
+                            numberOfNodesToScan),noDictionaryColIndexes);
         }
     }
 

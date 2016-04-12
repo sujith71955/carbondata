@@ -75,7 +75,7 @@ public class ColumnarKeyStoreDataHolder {
     }
     
     /**
-     * @author s71955
+     * 
      * get the byte[] for high cardinality column block
      * @return List<byte[]>.
      */
@@ -84,7 +84,7 @@ public class ColumnarKeyStoreDataHolder {
 	}
 
     /**
-     * @author s71955
+     * 
      * set the byte[] for high cardinality column block
      * @param directSurrogateBasedKeyBlockData
      */

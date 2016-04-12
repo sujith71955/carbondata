@@ -299,7 +299,7 @@ public abstract class AbstractColumnarScanResult {
 
     public abstract int getDimDataForAgg(int dimOrdinal);
 
-    public abstract byte[] getHighCardinalityDimDataForAgg(int dimOrdinal);
+    public abstract byte[] getNo_DictionayDimDataForAgg(int dimOrdinal);
 
     public abstract void getComplexDimDataForAgg(GenericQueryType complexType,
             DataOutputStream dataOutputStream) throws IOException;

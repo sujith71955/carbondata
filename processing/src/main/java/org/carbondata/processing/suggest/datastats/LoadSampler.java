@@ -353,7 +353,7 @@ public class LoadSampler {
 
 		// Sample data
 		HashSet<Integer> surrogates = new HashSet<Integer>(100);
-		HashSet<byte[]> directSurrogates = new HashSet<byte[]>(100);
+		HashSet<byte[]> noDictionaryColIndexes = new HashSet<byte[]>(100);
 		for (LoadHandler loadHandler : loadHandlers) {
 
 			try {
@@ -369,7 +369,7 @@ public class LoadSampler {
 						reader.getSampleFactDataForDirectSurrogateKey(
 								dimension.getOrdinal(),
 								DataStatsUtil.getNumberOfRows(dimension),
-								directSurrgateIndex, directSurrogates);
+								directSurrgateIndex, noDictionaryColIndexes);
 					} else {
 						surrogates.addAll(reader.getSampleFactData(
 								dimension.getOrdinal(),
@@ -382,7 +382,7 @@ public class LoadSampler {
 			}
 
 		}
-		if (surrogates.size() == 0 && directSurrogates.size()==0) {
+		if (surrogates.size() == 0 && noDictionaryColIndexes.size()==0) {
 			// in case of cube alteration, its possible that dimension will not
 			// have value in load. Hence
 			// in that case, pass "null" value.
@@ -395,9 +395,9 @@ public class LoadSampler {
 				+ dimension.getColName() + '_' + dimension.getDimName() + '_'
 				+ dimension.getHierName();
 		List<String> realDatas = new ArrayList<String>(surrogates.size());
-		if(directSurrogates.size()>0)
+		if(noDictionaryColIndexes.size()>0)
 		{
-			Iterator<byte[]> itr=directSurrogates.iterator();
+			Iterator<byte[]> itr=noDictionaryColIndexes.iterator();
 			while(itr.hasNext())
 			{
 				String data=new String(itr.next());

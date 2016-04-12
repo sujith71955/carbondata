@@ -72,7 +72,7 @@ public class NonFilterScanResult extends AbstractColumnarScanResult {
     }
 
     @Override
-    public byte[] getHighCardinalityDimDataForAgg(int dimOrdinal) {
+    public byte[] getNo_DictionayDimDataForAgg(int dimOrdinal) {
         ColumnarKeyStoreMetadata columnarKeyStoreMetadata =
                 columnarKeyStoreDataHolder[dimOrdinal].getColumnarKeyStoreMetadata();
         List<byte[]> directSurrogatesColumnarBlock=columnarKeyStoreDataHolder[dimOrdinal].getDirectSurrogateBasedKeyBlockData();
