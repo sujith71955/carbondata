@@ -35,13 +35,13 @@ class NO_DICTIONARY_COL_TestCase extends QueryTest with BeforeAndAfterAll {
   override def beforeAll {
     //For the Hive table creation and data loading
     sql("create table NO_DICTIONARY_HIVE_6(empno int,empname string,designation string,doj Timestamp,workgroupcategory int, workgroupcategoryname string,deptno int, deptname string, projectcode int, projectjoindate Timestamp,projectenddate Timestamp,attendance int,utilization int,salary int) row format delimited fields terminated by ',' collection items terminated by '$' map keys terminated by ':'")
-    sql("load data local inpath 'D:/carbondata/integration/spark/src/test/resources/data.csv' into table NO_DICTIONARY_HIVE_6");
+    sql("load data local inpath './src/test/resources/data.csv' into table NO_DICTIONARY_HIVE_6");
     //For Carbon cube creation.
     sql("CREATE CUBE NO_DICTIONARY_CARBON_6 DIMENSIONS (empno Integer, empname String, " +
       "designation String, doj Timestamp, workgroupcategory Integer, workgroupcategoryname String, " +
       "deptno Integer, deptname String, projectcode Integer, projectjoindate Timestamp, " +
       "projectenddate Timestamp) MEASURES (attendance Integer,utilization Integer,salary Integer) " + "OPTIONS (NO_DICTIONARY(empno,empname,deptname)PARTITIONER [PARTITION_COUNT=1])").show()
-    sql("LOAD DATA fact from 'D:/carbondata/integration/spark/src/test/resources/data.csv' INTO CUBE NO_DICTIONARY_CARBON_6 PARTITIONDATA(DELIMITER ',', QUOTECHAR '\"')");
+    sql("LOAD DATA fact from './src/test/resources/data.csv' INTO CUBE NO_DICTIONARY_CARBON_6 PARTITIONDATA(DELIMITER ',', QUOTECHAR '\"')");
 
   }
   test("Detail Query with NO_DICTIONARY_COLUMN Compare With HIVE RESULT") {
