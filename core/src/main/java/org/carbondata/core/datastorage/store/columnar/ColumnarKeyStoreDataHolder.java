@@ -24,17 +24,17 @@ import java.util.List;
 
 public class ColumnarKeyStoreDataHolder {
     private byte[] keyblockData;
-    private List<byte[]> directSurrogateBasedKeyBlockData;
+    private List<byte[]> noDictionaryValBasedKeyBlockData;
 	private ColumnarKeyStoreMetadata columnarKeyStoreMetadata;
     public ColumnarKeyStoreDataHolder(final byte[] keyblockData,
             final ColumnarKeyStoreMetadata columnarKeyStoreMetadata) {
         this.keyblockData = keyblockData;
         this.columnarKeyStoreMetadata = columnarKeyStoreMetadata;
     }
-    //Added constructor for holding directSurrogateBasedKeyBlockData
-    public ColumnarKeyStoreDataHolder(final List<byte[]> directSurrogateBasedKeyBlockData,
+    //Added constructor for holding noDictionaryValBasedKeyBlockData
+    public ColumnarKeyStoreDataHolder(final List<byte[]> noDictionaryValBasedKeyBlockData,
             final ColumnarKeyStoreMetadata columnarKeyStoreMetadata) {
-        this.directSurrogateBasedKeyBlockData = directSurrogateBasedKeyBlockData;
+        this.noDictionaryValBasedKeyBlockData = noDictionaryValBasedKeyBlockData;
         this.columnarKeyStoreMetadata = columnarKeyStoreMetadata;
     }
 
@@ -79,17 +79,17 @@ public class ColumnarKeyStoreDataHolder {
      * get the byte[] for high cardinality column block
      * @return List<byte[]>.
      */
-    public List<byte[]> getDirectSurrogateBasedKeyBlockData() {
-		return directSurrogateBasedKeyBlockData;
+    public List<byte[]> getNoDictionaryValBasedKeyBlockData() {
+		return noDictionaryValBasedKeyBlockData;
 	}
 
     /**
      * 
      * set the byte[] for high cardinality column block
-     * @param directSurrogateBasedKeyBlockData
+     * @param noDictionaryValBasedKeyBlockData
      */
-	public void setDirectSurrogateBasedKeyBlockData(
-			List<byte[]> directSurrogateBasedKeyBlockData) {
-		this.directSurrogateBasedKeyBlockData = directSurrogateBasedKeyBlockData;
+	public void setNoDictionaryValBasedKeyBlockData(
+			List<byte[]> noDictionaryValBasedKeyBlockData) {
+		this.noDictionaryValBasedKeyBlockData = noDictionaryValBasedKeyBlockData;
 	}
 }

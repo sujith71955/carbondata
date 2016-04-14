@@ -101,7 +101,7 @@ public class MapBasedResultAggregatorImpl implements ColumnarScannedResultAggreg
                         columnaraggreagtorInfo.getCustomExpressions(), isAggTable, null,
                         columnaraggreagtorInfo.getCubeUniqueName(),
                         columnaraggreagtorInfo.getMsrMinValue(),
-                        columnaraggreagtorInfo.getHighCardinalityTypes(),
+                        columnaraggreagtorInfo.getNoDictionaryTypes(),
                         columnaraggreagtorInfo.getDataTypes());
                 aggData.put(dimensionsRowWrapper, currentMsrRowData);
             }
@@ -140,9 +140,9 @@ public class MapBasedResultAggregatorImpl implements ColumnarScannedResultAggreg
                         && restructureHolder.metaData.getNewDimsDefVals().length > 0) {
                     for (int i = 0;
                          i < restructureHolder.metaData.getNewDimsDefVals().length; i++) {
-                      if(restructureHolder.getIsHighCardinalityNewDims()[i])
+                      if(restructureHolder.getIsNoDictionaryNewDims()[i])
                       {
-                        key.addToDirectSurrogateKeyList(restructureHolder.metaData.getNewDimsDefVals()[i].getBytes());
+                        key.addToNoDictionaryValKeyList(restructureHolder.metaData.getNewDimsDefVals()[i].getBytes());
                       }
                       else
                       {

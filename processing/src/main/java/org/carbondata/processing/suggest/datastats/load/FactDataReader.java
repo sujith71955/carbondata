@@ -75,13 +75,13 @@ public class FactDataReader {
     }
 
     /**
-     * getSampleFactDataForDirectSurrogateKey.
+     * getSampleFactDataForNoDictionaryValKey.
      * @param ordinal
      * @param numberOfRows
-     * @param directSurrgateIndex
+     * @param noDictionaryValgateIndex
      * @param noDictionaryColIndexes
      */
-	public void getSampleFactDataForDirectSurrogateKey(int dimension,
+	public void getSampleFactDataForNoDictionaryValKey(int dimension,
 			int numberOfRows, int[] noDictionaryColIndexes, HashSet<byte[]> mergedData) {
 		int[] dimensions = new int[] { dimension };
 		boolean[] needCompression = new boolean[dimensions.length];
@@ -99,7 +99,7 @@ public class FactDataReader {
 			ColumnarKeyStoreDataHolder dataHolder = factDataNodes.get(i)
 					.getColumnData(fileHolder, dimension, false,
 							noDictionaryColIndexes);
-			scanner.getLimitedDataBlockForDirectSurrogates(numberOfRows,
+			scanner.getLimitedDataBlockForNoDictionaryVals(numberOfRows,
 					mergedData, dataHolder);
 		}
 

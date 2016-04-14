@@ -50,8 +50,8 @@ public class CompressedColumnarInMemoryStore extends AbstractColumnarKeyStore {
             int[] dataIndex = null;
             boolean isUnCompressed = true;
             columnarKeyBlockDataTemp = COMPRESSOR.unCompress(columnarKeyBlockData[blockIndex[i]]);
-            boolean isHighCardinalityBlock=CompressedColumnarKeyStoreUtil.isNoDictionaryBlock(noDictionaryColIndexes, blockIndex[i]);
-            if (!isHighCardinalityBlock && this.columnarStoreInfo.getAggKeyBlock()[blockIndex[i]]) {
+            boolean isNoDictionaryBlock=CompressedColumnarKeyStoreUtil.isNoDictionaryBlock(noDictionaryColIndexes, blockIndex[i]);
+            if (!isNoDictionaryBlock && this.columnarStoreInfo.getAggKeyBlock()[blockIndex[i]]) {
                 dataIndex = columnarStoreInfo.getNumberCompressor().unCompress(
                         columnarUniqueblockKeyBlockIndex[mapOfAggDataIndex.get(blockIndex[i])]);
                 if (!needCompressedData[i]) {
@@ -71,18 +71,18 @@ public class CompressedColumnarInMemoryStore extends AbstractColumnarKeyStore {
                         columnarStoreInfo.getNumberCompressor());
                 columnKeyBlockReverseIndexes = getColumnIndexForNonFilter(columnKeyBlockIndex);
             }
-            if (isHighCardinalityBlock) {
+            if (isNoDictionaryBlock) {
               columnarKeyStoreMetadata = new ColumnarKeyStoreMetadata(0);
               columnarKeyStoreMetadata.setColumnIndex(columnKeyBlockIndex);
               columnarKeyStoreMetadata.setColumnReverseIndex(columnKeyBlockReverseIndexes);
-              columnarKeyStoreMetadata.setDirectSurrogateColumn(true);
+              columnarKeyStoreMetadata.setNoDictionaryValColumn(true);
               columnarKeyStoreMetadata.setUnCompressed(true);
               columnarKeyStoreMetadata.setSorted(columnarStoreInfo.getIsSorted()[blockIndex[i]]);
               //System is reading the direct surrogates data from byte array which contains both length and the
               //direct surrogates data
-              List<byte[]> directSurrogateBasedKeyBlockData= CompressedColumnarKeyStoreUtil.readColumnarKeyBlockDataForNoDictionaryCols(columnarKeyBlockDataTemp);
+              List<byte[]> noDictionaryValBasedKeyBlockData= CompressedColumnarKeyStoreUtil.readColumnarKeyBlockDataForNoDictionaryCols(columnarKeyBlockDataTemp);
               columnarKeyStoreDataHolders[i] =
-                      new ColumnarKeyStoreDataHolder(directSurrogateBasedKeyBlockData,
+                      new ColumnarKeyStoreDataHolder(noDictionaryValBasedKeyBlockData,
                               columnarKeyStoreMetadata);
           }
             columnarKeyStoreMetadata = new ColumnarKeyStoreMetadata(
@@ -101,7 +101,7 @@ public class CompressedColumnarInMemoryStore extends AbstractColumnarKeyStore {
 
     @Override
     public ColumnarKeyStoreDataHolder getUnCompressedKeyArray(FileHolder fileHolder, int blockIndex,
-            boolean needCompressedData,int[] directSurrogates) {
+            boolean needCompressedData,int[] noDictionaryVals) {
 
         byte[] columnarKeyBlockDataTemp = null;
         int[] columnKeyBlockIndex = null;
@@ -111,8 +111,8 @@ public class CompressedColumnarInMemoryStore extends AbstractColumnarKeyStore {
         int[] dataIndex = null;
         boolean isUnCompressed = true;
         columnarKeyBlockDataTemp = COMPRESSOR.unCompress(columnarKeyBlockData[blockIndex]);
-        boolean isHighCardinalityBlock=CompressedColumnarKeyStoreUtil.isNoDictionaryBlock(directSurrogates,blockIndex);
-        if (!isHighCardinalityBlock && this.columnarStoreInfo.getAggKeyBlock()[blockIndex]) {
+        boolean isNoDictionaryBlock=CompressedColumnarKeyStoreUtil.isNoDictionaryBlock(noDictionaryVals,blockIndex);
+        if (!isNoDictionaryBlock && this.columnarStoreInfo.getAggKeyBlock()[blockIndex]) {
             dataIndex = columnarStoreInfo.getNumberCompressor().unCompress(
                     columnarUniqueblockKeyBlockIndex[mapOfAggDataIndex.get(blockIndex)]);
             if (!needCompressedData) {
@@ -132,7 +132,7 @@ public class CompressedColumnarInMemoryStore extends AbstractColumnarKeyStore {
                     columnarStoreInfo.getNumberCompressor());
             columnKeyBlockReverseIndex = getColumnIndexForNonFilter(columnKeyBlockIndex);
         }
-       if (isHighCardinalityBlock) {
+       if (isNoDictionaryBlock) {
         ColumnarKeyStoreDataHolder colKeystoreDataHolders =
           CompressedColumnarKeyStoreUtil.createColumnarKeyStoreMetadataForHCDims(blockIndex,
             columnarKeyBlockDataTemp, columnKeyBlockIndex, columnKeyBlockReverseIndex,

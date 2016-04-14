@@ -479,7 +479,7 @@ public class QueryExecutorImpl extends AbstractQueryExecutor {
         info.setCurrentSliceIndex(currentSliceIndex);
         info.setMsrMinValue(executerProperties.msrMinValue);
         info.setAggType(executerProperties.aggTypes);
-        info.setHighCardinalityType(executerProperties.isHighCardinality);
+        info.setNoDictionaryType(executerProperties.isNoDictionary);
         info.setAllSelectedMeasures(QueryExecutorUtility
                 .getAllSelectedMeasureOrdinals(measures, executerProperties.aggExpMeasures,
                         sliceMataData.getMeasures()));

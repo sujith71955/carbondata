@@ -148,23 +148,23 @@ public class AggDataSuggestScanner extends AbstractColumnarScanResult {
      * @param mergedData
      * @param dataHolder
      */
-    public void getLimitedDataBlockForDirectSurrogates(int noOfRows,Set<byte[]> mergedData,ColumnarKeyStoreDataHolder dataHolder)
+    public void getLimitedDataBlockForNoDictionaryVals(int noOfRows,Set<byte[]> mergedData,ColumnarKeyStoreDataHolder dataHolder)
     {
     	if(null!=dataHolder)
     	{
     		ColumnarKeyStoreMetadata keyStoreMetadata=dataHolder.getColumnarKeyStoreMetadata();
-			if (null != dataHolder.getDirectSurrogateBasedKeyBlockData()) {
-				List<byte[]> listOfDirectSurrogates = dataHolder
-						.getDirectSurrogateBasedKeyBlockData();
+			if (null != dataHolder.getNoDictionaryValBasedKeyBlockData()) {
+				List<byte[]> listOfNoDictionaryVals = dataHolder
+						.getNoDictionaryValBasedKeyBlockData();
 				for(int i=0;i<noOfRows;i++)
 				{
 					if(null==keyStoreMetadata.getColumnReverseIndex())
 					{
-						mergedData.add(listOfDirectSurrogates.get(i));
+						mergedData.add(listOfNoDictionaryVals.get(i));
 					}
 					else
 					{
-						mergedData.add(listOfDirectSurrogates.get(keyStoreMetadata.getColumnReverseIndex()[i]));	
+						mergedData.add(listOfNoDictionaryVals.get(keyStoreMetadata.getColumnReverseIndex()[i]));	
 					}
 				}
 			}

@@ -62,7 +62,7 @@ case class CubeModel(
                       factFieldsList: Option[FilterCols],
                       dimRelations: Seq[DimensionRelation],
                       simpleDimRelations: Seq[DimensionRelation],
-    highcardinalitydims:Option[Seq[String]],
+    noDictionarydims:Option[Seq[String]],
                       aggregation: Seq[Aggregation],
                       partitioner: Option[Partitioner])
 
@@ -99,7 +99,7 @@ case class Measure(name: String, column: String, dataType: String, aggregator: S
 
 case class Hierarchy(name: String, primaryKey: Option[String], levels: Seq[Level], tableName: Option[String], normalized: Boolean = false)
 
-case class Dimension(name: String, hierarchies: Seq[Hierarchy], foreignKey: Option[String], dimType: String = "StandardDimension", visible: Boolean = true,var highCardinality: Boolean = false)
+case class Dimension(name: String, hierarchies: Seq[Hierarchy], foreignKey: Option[String], dimType: String = "StandardDimension", visible: Boolean = true,var noDictionary: Boolean = false)
 
 case class FilterCols(includeKey: String, fieldList: Seq[String])
 
@@ -243,27 +243,27 @@ class CubeProcessor(cm: CubeModel, sqlContext: SQLContext) {
     var dimensions = hierarchies.map(field => Dimension(field.name, Seq(field), None))
 
     dimensions = dimensions ++ dimSrcDimensions
-//    val highCardinalityDims=cm.highcardinalitydims.get
-    val highCardinalityDims=cm.highcardinalitydims.getOrElse(Seq())
+//    val noDictionaryDims=cm.noDictionarydims.get
+    val noDictionaryDims=cm.noDictionarydims.getOrElse(Seq())
     for(dimension <- dimensions)
     {
       
-      if(highCardinalityDims.contains(dimension.name))
+      if(noDictionaryDims.contains(dimension.name))
       {
-        dimension.highCardinality=true
+        dimension.noDictionary=true
       }
       
     }
     
     var newOrderedDims = scala.collection.mutable.ListBuffer[Dimension]()
-    val highCardDims = scala.collection.mutable.ListBuffer[Dimension]()
+    val noDictionaryDimsList = scala.collection.mutable.ListBuffer[Dimension]()
     val complexDims = scala.collection.mutable.ListBuffer[Dimension]()
      for(dimension <- dimensions)
     {
-      if(highCardinalityDims.contains(dimension.name))
+      if(noDictionaryDimsList.contains(dimension.name))
       {
-       // dimension.highCardinality=true
-        highCardDims.add(dimension)
+       // dimension.noDictionary=true
+        noDictionaryDimsList.add(dimension)
       }
       else if(dimension.hierarchies(0).levels.length > 1)
       {
@@ -276,7 +276,7 @@ class CubeProcessor(cm: CubeModel, sqlContext: SQLContext) {
       
     }
     
-    newOrderedDims = newOrderedDims ++ highCardDims ++ complexDims
+    newOrderedDims = newOrderedDims ++ noDictionaryDimsList ++ complexDims
 
     dimensions = newOrderedDims
     
@@ -1045,7 +1045,7 @@ private[sql] case class AlterCube(
     //CubeProcessor by default adds a DEFAULT_INVISIBLE_DUMMY_MEASURE.This is required for CreateCube but not for adding a
     //new measure.Hence after forming the measures object, we remove it from the list
     cubeXML.measures = cubeXML.measures.filter { x => x.name != CarbonCommonConstants.DEFAULT_INVISIBLE_DUMMY_MEASURE }
-    addNewDimensionsToCube(cubeXML, cube,cm.highcardinalitydims.get)
+    addNewDimensionsToCube(cubeXML, cube,cm.noDictionarydims.get)
 
     cubeXML
   }
@@ -1082,7 +1082,7 @@ private[sql] case class AlterCube(
         hierXml.normalized = false
         if(highCardDims.contains(dim.name))
         {
-          dimXml.highCardinality=true
+          dimXml.noDictionary=true
         }
         hier.tableName match {
           case Some(tble: String) =>
@@ -1320,7 +1320,7 @@ private[sql] case class CreateCube(cm: CubeModel) extends RunnableCommand {
         val dimXml = new CarbonDef.Dimension
         dimXml.name = dim.name
         dimXml.visible = dim.visible
-        dimXml.highCardinality = dim.highCardinality
+        dimXml.noDictionary = dim.noDictionary
         setV(dimXml, "type", dim.dimType)
         
 

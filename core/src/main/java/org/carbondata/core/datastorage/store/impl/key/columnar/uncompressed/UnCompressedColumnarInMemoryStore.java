@@ -64,7 +64,7 @@ public class UnCompressedColumnarInMemoryStore extends AbstractColumnarKeyStore 
 
     @Override
     public ColumnarKeyStoreDataHolder getUnCompressedKeyArray(FileHolder fileHolder, int blockIndex,
-            boolean needCompressedData,int[] directSurrogates) {
+            boolean needCompressedData,int[] noDictionaryVals) {
         return null;
     }
 

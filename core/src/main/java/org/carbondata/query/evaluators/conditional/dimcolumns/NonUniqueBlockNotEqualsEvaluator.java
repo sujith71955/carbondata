@@ -55,7 +55,7 @@ public class NonUniqueBlockNotEqualsEvaluator extends AbstractConditionalEvaluto
 
     private BitSet getFilteredIndexes(ColumnarKeyStoreDataHolder keyStoreArray, int numerOfRows) {
         //For high cardinality dimensions.
-        if (keyStoreArray.getColumnarKeyStoreMetadata().isDirectSurrogateColumn()) {
+        if (keyStoreArray.getColumnarKeyStoreMetadata().isNoDictionaryValColumn()) {
             return setDirectKeyFilterIndexToBitSet(keyStoreArray, numerOfRows);
         }
         if (null != keyStoreArray.getColumnarKeyStoreMetadata().getColumnIndex()) {
@@ -68,21 +68,21 @@ public class NonUniqueBlockNotEqualsEvaluator extends AbstractConditionalEvaluto
             int numerOfRows) {
         BitSet bitSet = new BitSet(numerOfRows);
         bitSet.flip(0, numerOfRows);
-        List<byte[]> listOfColumnarKeyBlockDataForDirectSurroagtes =
-                keyBlockArray.getDirectSurrogateBasedKeyBlockData();
+        List<byte[]> listOfColumnarKeyBlockDataForNoDictionaryVals =
+                keyBlockArray.getNoDictionaryValBasedKeyBlockData();
         byte[][] filterValues = dimColEvaluatorInfoList.get(0).getFilterValues();
         int[] columnIndexArray = keyBlockArray.getColumnarKeyStoreMetadata().getColumnIndex();
         int[] columnReverseIndexArray =
                 keyBlockArray.getColumnarKeyStoreMetadata().getColumnReverseIndex();
         for (int i = 0; i < filterValues.length; i++) {
             byte[] filterVal = filterValues[i];
-            if (null != listOfColumnarKeyBlockDataForDirectSurroagtes) {
+            if (null != listOfColumnarKeyBlockDataForNoDictionaryVals) {
 
                 if (null != columnReverseIndexArray) {
                     for (int index : columnIndexArray) {
-                        byte[] directSurrogate = listOfColumnarKeyBlockDataForDirectSurroagtes
+                        byte[] noDictionaryVal = listOfColumnarKeyBlockDataForNoDictionaryVals
                                 .get(columnReverseIndexArray[index]);
-                        if (ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterVal, directSurrogate)
+                        if (ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterVal, noDictionaryVal)
                                 == 0) {
                             bitSet.flip(index);
                         }
@@ -90,9 +90,9 @@ public class NonUniqueBlockNotEqualsEvaluator extends AbstractConditionalEvaluto
                 } else if (null != columnIndexArray) {
 
                     for (int index : columnIndexArray) {
-                        byte[] directSurrogate = listOfColumnarKeyBlockDataForDirectSurroagtes
+                        byte[] noDictionaryVal = listOfColumnarKeyBlockDataForNoDictionaryVals
                                 .get(columnIndexArray[index]);
-                        if (ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterVal, directSurrogate)
+                        if (ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterVal, noDictionaryVal)
                                 == 0) {
                             bitSet.flip(index);
                         }
@@ -101,7 +101,7 @@ public class NonUniqueBlockNotEqualsEvaluator extends AbstractConditionalEvaluto
                 }
                 else
                 {
-                	Iterator<byte[]> itr=listOfColumnarKeyBlockDataForDirectSurroagtes.iterator();
+                	Iterator<byte[]> itr=listOfColumnarKeyBlockDataForNoDictionaryVals.iterator();
                 	int index=0;
                 	while(itr.hasNext())
                 	{

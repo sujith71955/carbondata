@@ -79,13 +79,13 @@ public class FilterScanResult extends AbstractColumnarScanResult {
     public byte[] getNo_DictionayDimDataForAgg(int dimOrdinal) {
         ColumnarKeyStoreMetadata columnarKeyStoreMetadata =
                 columnarKeyStoreDataHolder[dimOrdinal].getColumnarKeyStoreMetadata();
-        List<byte[]> directSurrogatesColumnarBlock=columnarKeyStoreDataHolder[dimOrdinal].getDirectSurrogateBasedKeyBlockData();
-        if (null != directSurrogatesColumnarBlock) {
+        List<byte[]> noDictionaryValsColumnarBlock=columnarKeyStoreDataHolder[dimOrdinal].getNoDictionaryValBasedKeyBlockData();
+        if (null != noDictionaryValsColumnarBlock) {
             
             if (null == columnarKeyStoreMetadata.getColumnReverseIndex()) {
-                return directSurrogatesColumnarBlock.get(rowMapping[currentRow]);
+                return noDictionaryValsColumnarBlock.get(rowMapping[currentRow]);
             }
-            return directSurrogatesColumnarBlock
+            return noDictionaryValsColumnarBlock
                     .get(columnarKeyStoreMetadata.getColumnReverseIndex()[rowMapping[currentRow]]);
         }
         return null;

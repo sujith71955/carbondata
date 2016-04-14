@@ -216,7 +216,7 @@ class CarbonSqlDDLParser()
     DEFAULTS ~> ("[" ~> defaultVals <~ "]")
 
   protected lazy val defaultOptions =
-    ("(" ~> (highcardinalityDims).? ~ (aggregation).? ~ defaultDefn.? <~ ")")
+    ("(" ~> (noDictionaryDims).? ~ (aggregation).? ~ defaultDefn.? <~ ")")
 
   protected lazy val dropDefinition =
     DROP ~> "(" ~> rep1sep((stringLit | ident), ",") <~ ")"
@@ -238,7 +238,7 @@ class CarbonSqlDDLParser()
       protected lazy val aggOptionsForShowCreate = 
           (aggregation).? ~ (",".? ~> partitioner).?
   protected lazy val aggOptions =
-    (highcardinalityDims).? ~ (",".? ~> aggregation).? ~ (",".? ~> partitioner).?
+    (noDictionaryDims).? ~ (",".? ~> aggregation).? ~ (",".? ~> partitioner).?
     protected lazy val showcreateCubeOptionDef = 
         ("(" ~> aggOptionsForShowCreate <~ ")")
 
@@ -340,8 +340,8 @@ class CarbonSqlDDLParser()
           }
         }
 
-        val (highCardinality,aggregation,defaultVals) = options match {
-          case Some(highCardinality ~ aggregation ~ defaultVals) => (highCardinality.getOrElse(Some(Seq())),aggregation.getOrElse(Seq()), defaultVals.getOrElse(Seq()))
+        val (noDictionary,aggregation,defaultVals) = options match {
+          case Some(noDictionary ~ aggregation ~ defaultVals) => (noDictionary.getOrElse(Some(Seq())),aggregation.getOrElse(Seq()), defaultVals.getOrElse(Seq()))
           case _ => (Some(Seq()),Seq(), Seq())
         }
 
@@ -352,7 +352,7 @@ class CarbonSqlDDLParser()
 
         AlterCube(CubeModel(false, schemaName.getOrElse("default"), schemaName, cubeName, dimCols.map(f => normalizeType(f)),
           msrCols.map(f => normalizeType(f)), "", withKeyword, "",
-              None, Seq(), simpleDimRelations,highCardinality,aggregation, None),
+              None, Seq(), simpleDimRelations,noDictionary,aggregation, None),
           dropCols, defaultVals)
       }
 
@@ -538,7 +538,7 @@ class CarbonSqlDDLParser()
 
   protected lazy val aggregation: Parser[Seq[Aggregation]] =
     AGGREGATION ~> ("[" ~> aggExpressions <~ "]")
-    protected lazy val highcardinalityDims: Parser[Option[Seq[String]]] = 
+    protected lazy val noDictionaryDims: Parser[Option[Seq[String]]] = 
       HIGH_CARDINALITY_DIMS ~> ("(" ~> repsep((ident | stringLit), ",") <~ ")") ^^ {
         case hc => {
          Some(hc) 

@@ -103,7 +103,7 @@ public class LoadSampler {
      * modification time as value.
      */
     private QueryScopeObject queryScopeObject;
-    private int[] directSurrgateIndex;
+    private int[] noDictionaryValgateIndex;
 
     /**
      * This will have dimension ordinal as key and dimension cardinality as value
@@ -142,7 +142,7 @@ public class LoadSampler {
         LOGGER.info(CarbonEngineLogEvent.UNIBI_CARBONENGINE_MSG,
                 "Loading data to BPlus tree started");
         Dimension[] listOfAllDims=visibleDimensions.toArray(new Dimension[visibleDimensions.size()]);
-        directSurrgateIndex=CarbonUtil.getNoDictionaryColIndex(listOfAllDims);
+        noDictionaryValgateIndex=CarbonUtil.getNoDictionaryColIndex(listOfAllDims);
         metaCube = InMemoryTableStore.getInstance()
                 .loadCubeMetadataIfRequired(schema, cube, partitionId,
                         loadModel.getSchemaLastUpdatedTime());
@@ -208,9 +208,9 @@ public class LoadSampler {
         String[] sliceDimensions = sliceMetaData.getDimensions();
         int[] sliceCardinalities = sliceMetaData.getActualDimLens();
         for (Dimension dimension : visibleDimensions) {
-        	if(dimension.isHighCardinalityDim())
+        	if(dimension.isNoDictionaryDim())
         	{
-        		addCardinalityBasedOnHighCardinalityColumn(dimension);
+        		addCardinalityBasedOnNoDictionaryColumn(dimension);
         	}
             String dimName = dimension.getColName();
             Integer dimensionCardinality = 1;
@@ -228,7 +228,7 @@ public class LoadSampler {
         }
     }
 
-    private void addCardinalityBasedOnHighCardinalityColumn(Dimension dimension) {
+    private void addCardinalityBasedOnNoDictionaryColumn(Dimension dimension) {
     	  // Create QueryExecution model
         CarbonQueryExecutorModel queryExecutionModel =
                 createQueryExecutorModel(dimension);
@@ -365,11 +365,11 @@ public class LoadSampler {
 						.handleFactData(getTableName());
 				if (null != factDataHandler) {
 					FactDataReader reader = factDataHandler.getFactDataReader();
-					if (dimension.isHighCardinalityDim()) {
-						reader.getSampleFactDataForDirectSurrogateKey(
+					if (dimension.isNoDictionaryDim()) {
+						reader.getSampleFactDataForNoDictionaryValKey(
 								dimension.getOrdinal(),
 								DataStatsUtil.getNumberOfRows(dimension),
-								directSurrgateIndex, noDictionaryColIndexes);
+								noDictionaryValgateIndex, noDictionaryColIndexes);
 					} else {
 						surrogates.addAll(reader.getSampleFactData(
 								dimension.getOrdinal(),

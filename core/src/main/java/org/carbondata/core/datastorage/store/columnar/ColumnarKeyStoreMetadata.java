@@ -38,9 +38,9 @@ public class ColumnarKeyStoreMetadata {
     private KeyGenerator keyGenerator;
 
     /**
-     * isDirectSurrogateColumn.
+     * isNoDictionaryValColumn.
      */
-    private boolean isDirectSurrogateColumn;
+    private boolean isNoDictionaryValColumn;
     private boolean isRowStore;
 
     public ColumnarKeyStoreMetadata(int eachRowSize) {
@@ -134,16 +134,16 @@ public class ColumnarKeyStoreMetadata {
     /**
      * @return
      */
-    public boolean isDirectSurrogateColumn() {
-        return isDirectSurrogateColumn;
+    public boolean isNoDictionaryValColumn() {
+        return isNoDictionaryValColumn;
         
     }
 
     /**
-     * @param isDirectSurrogateColumn
+     * @param isNoDictionaryValColumn
      */
-    public void setDirectSurrogateColumn(boolean isDirectSurrogateColumn) {
-        this.isDirectSurrogateColumn = isDirectSurrogateColumn;
+    public void setNoDictionaryValColumn(boolean isNoDictionaryValColumn) {
+        this.isNoDictionaryValColumn = isNoDictionaryValColumn;
 
     }
 

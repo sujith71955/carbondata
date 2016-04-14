@@ -87,7 +87,7 @@ public class ColumnarSliceExecuter implements Callable<Void> {
         columnarStorageScannerInfo.setScannedResultProcessor(scannedResultProcessor);
         columnarStorageScannerInfo.setRestructurHolder(info.getRestructureHolder());
         columnarStorageScannerInfo.setAutoAggregateTableRequest(info.isCustomMeasure());
-        //int [] queryDimOrdinalValue=QueryExecutorUtil.removeHighCardinalityDimOrdinal(info.getQueryDimOrdinal(),info.getQueryDimensions());
+        //int [] queryDimOrdinalValue=QueryExecutorUtil.removeNoDictionaryDimOrdinal(info.getQueryDimOrdinal(),info.getQueryDimensions());
         if (null != info.getColumnarSplitter()) {
             columnarStorageScannerInfo.setKeySize(
                     info.getColumnarSplitter().getKeySizeByBlock(info.getQueryDimOrdinal()));
@@ -120,7 +120,7 @@ public class ColumnarSliceExecuter implements Callable<Void> {
         aggregatorInfo.setCubeUniqueName(sliceInfo.getSlice().getCubeUniqueName());
         aggregatorInfo.setMeasureOrdinal(sliceInfo.getMeasureOrdinal());
         aggregatorInfo.setAggType(sliceInfo.getAggType());
-        aggregatorInfo.setHighCardinalityType(sliceInfo.getHighCardinalityTypes());
+        aggregatorInfo.setNoDictionaryType(sliceInfo.getNoDictionaryTypes());
         aggregatorInfo.setCustomExpressions(sliceInfo.getCustomExpressions());
         aggregatorInfo.setMsrMinValue(sliceInfo.getMsrMinValue());
         aggregatorInfo.setMeasureStartIndex(sliceInfo.getMeasureStartIndex());
@@ -153,7 +153,7 @@ public class ColumnarSliceExecuter implements Callable<Void> {
                 new ColumnarDataStoreBlockProcessorInfo();
         blockProcessorInfo.setDimensionIndexes(sliceInfo.getQueryDimOrdinal());
         blockProcessorInfo.setFileHolder(fileHolder);
-        //int [] queryDimOrdinalValue=QueryExecutorUtil.removeHighCardinalityDimOrdinal(sliceInfo.getQueryDimOrdinal(),sliceInfo.getQueryDimensions());
+        //int [] queryDimOrdinalValue=QueryExecutorUtil.removeNoDictionaryDimOrdinal(sliceInfo.getQueryDimOrdinal(),sliceInfo.getQueryDimensions());
         if (null != sliceInfo.getColumnarSplitter()) {
             blockProcessorInfo.setKeySize(sliceInfo.getColumnarSplitter()
                     .getKeySizeByBlock(sliceInfo.getQueryDimOrdinal()));

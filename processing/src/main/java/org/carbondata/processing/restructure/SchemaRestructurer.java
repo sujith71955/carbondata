@@ -253,7 +253,7 @@ public class SchemaRestructurer {
                 defaultVal = defaultValues.get(aDimension.name) == null ?
                         null :
                         defaultValues.get(aDimension.name);
-                if(aDimension.highCardinality)
+                if(aDimension.noDictionary)
                 {
                 	continue;
                 }

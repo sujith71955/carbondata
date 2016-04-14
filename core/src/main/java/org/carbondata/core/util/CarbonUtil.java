@@ -382,13 +382,13 @@ public final class CarbonUtil {
     /**
      * @param dimCardinality                : dimension cardinality
      * @param dimensionStoreType            : dimension store type: true->columnar, false->row
-     * @param highCardDimOrdinals
+     * @param NoDictionaryDimOrdinals
      * @param columnarStoreColumns->columns for columnar store
      * @param rowStoreColumns               -> columns for row store
      * @return
      */
     public static HybridStoreModel getHybridStoreMeta(int[] dimCardinality,
-            boolean[] dimensionStoreType, List<Integer> highCardDimOrdinals) {
+            boolean[] dimensionStoreType, List<Integer> noDictionaryDimOrdinals) {
         //get dimension store type
         HybridStoreModel hybridStoreMeta = new HybridStoreModel();
 
@@ -438,9 +438,9 @@ public final class CarbonUtil {
         }
 
         //updating with highcardinality dimension store detail
-        if (null != highCardDimOrdinals) {
-            for (Integer highCardDimOrdinal : highCardDimOrdinals) {
-                dimOrdinalStoreIndexMapping.put(highCardDimOrdinal, storeIndex++);
+        if (null != noDictionaryDimOrdinals) {
+            for (Integer noDictionaryDimOrdinal : noDictionaryDimOrdinals) {
+                dimOrdinalStoreIndexMapping.put(noDictionaryDimOrdinal, storeIndex++);
             }
         }
 
@@ -1979,13 +1979,13 @@ public final class CarbonUtil {
       List<Integer> dirSurrogateList=new ArrayList<Integer>(currentDims.length);
       for(Dimension dim:currentDims)
       {
-        if(dim.isHighCardinalityDim())
+        if(dim.isNoDictionaryDim())
         {
           dirSurrogateList.add(dim.getOrdinal());
         }
       }
-      int[] directSurrogateIndex=ArrayUtils.toPrimitive(dirSurrogateList.toArray(new Integer[dirSurrogateList.size()]));
-      return directSurrogateIndex;
+      int[] noDictionaryValIndex=ArrayUtils.toPrimitive(dirSurrogateList.toArray(new Integer[dirSurrogateList.size()]));
+      return noDictionaryValIndex;
     }
 }
 

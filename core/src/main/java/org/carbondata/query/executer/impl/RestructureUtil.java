@@ -52,8 +52,8 @@ public final class RestructureUtil {
         int len = 0;
         String[] sMetaDims = sliceMataData.getDimensions();
         //if high
-        List<Boolean> isHighCardinalityDims=new ArrayList<Boolean>(executerProperties.dimTables.length);
-        boolean[] isHighCardinalityDimsArray=new boolean[executerProperties.dimTables.length];
+        List<Boolean> isNoDictionaryDims=new ArrayList<Boolean>(executerProperties.dimTables.length);
+        boolean[] isNoDictionaryDimsArray=new boolean[executerProperties.dimTables.length];
         List<Dimension> crntDims = new ArrayList<Dimension>();
         for (int i = 0; i < executerProperties.dimTables.length; i++) {
             found = false;
@@ -71,16 +71,16 @@ public final class RestructureUtil {
 
             if (!found) {
                 holder.updateRequired = true;
-                if(executerProperties.dimTables[i].isHighCardinalityDim())
+                if(executerProperties.dimTables[i].isNoDictionaryDim())
                 {
-                	isHighCardinalityDims.add(true);
+                	isNoDictionaryDims.add(true);
                 }
             }
 
         }
         len = 0;
         for (int i = 0; i < queryDims.length; i++) {
-            if (queryDims[i].isHighCardinalityDim()) {
+            if (queryDims[i].isNoDictionaryDim()) {
                 currentDimList.add(queryDims[i]);
                 continue;
             }
@@ -96,8 +96,8 @@ public final class RestructureUtil {
         }
         if(holder.updateRequired)
         {
-        	isHighCardinalityDimsArray=ArrayUtils.toPrimitive(isHighCardinalityDims.toArray(new Boolean[isHighCardinalityDims.size()]));
-        	holder.setIsHighCardinalityNewDims(isHighCardinalityDimsArray);
+        	isNoDictionaryDimsArray=ArrayUtils.toPrimitive(isNoDictionaryDims.toArray(new Boolean[isNoDictionaryDims.size()]));
+        	holder.setIsNoDictionaryNewDims(isNoDictionaryDimsArray);
         }
         return crntDims.toArray(new Dimension[crntDims.size()]);
     }

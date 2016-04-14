@@ -94,10 +94,10 @@ public abstract class AbstractColumnarScanResult {
         int destinationPosition = 0;
         for (int i = 0; i < selectedDimensionIndex.length; i++) {
             if (columnarKeyStoreDataHolder[selectedDimensionIndex[i]].getColumnarKeyStoreMetadata()
-                    .isDirectSurrogateColumn()) {
+                    .isNoDictionaryValColumn()) {
                 //Incase of high cardinality system has to update the byte array with high
                 //cardinality dimension values.
-                updateByteArrayWithDirectSurrogateKeyVal(keyVal, columnIndex,
+                updateByteArrayWithNoDictionaryValKeyVal(keyVal, columnIndex,
                         columnarKeyStoreDataHolder[selectedDimensionIndex[i]]);
                 continue;
             }
@@ -140,28 +140,28 @@ public abstract class AbstractColumnarScanResult {
      * Incase of high cardinality system has to update the byte array with high cardinality
      * dimension values separately since its not part of Key generator. Based on column reverse
      * index value the high cardinality data has been get from the
-     * mapOfColumnarKeyBlockDataForDirectSurroagtes.
+     * mapOfColumnarKeyBlockDataForNoDictionaryVals.
      *
      * @param key
      * @param colIndex
      * @param columnarKeyStoreDataHolder
      */
-    private void updateByteArrayWithDirectSurrogateKeyVal(ByteArrayWrapper key, int colIndex,
+    private void updateByteArrayWithNoDictionaryValKeyVal(ByteArrayWrapper key, int colIndex,
             ColumnarKeyStoreDataHolder columnarKeyStoreDataHolder) {
 
-        List<byte[]> listOfColumnarKeyBlockDataForDirectSurroagtes =
-                columnarKeyStoreDataHolder.getDirectSurrogateBasedKeyBlockData();
+        List<byte[]> listOfColumnarKeyBlockDataForNoDictionaryVals =
+                columnarKeyStoreDataHolder.getNoDictionaryValBasedKeyBlockData();
         int[] columnReverseIndexArray =
                 columnarKeyStoreDataHolder.getColumnarKeyStoreMetadata().getColumnReverseIndex();
 
-        if (null != listOfColumnarKeyBlockDataForDirectSurroagtes) {
+        if (null != listOfColumnarKeyBlockDataForNoDictionaryVals) {
             if (null != columnReverseIndexArray) {
 
-                key.addToDirectSurrogateKeyList(listOfColumnarKeyBlockDataForDirectSurroagtes
+                key.addToNoDictionaryValKeyList(listOfColumnarKeyBlockDataForNoDictionaryVals
                         .get(columnReverseIndexArray[colIndex]));
             } else {
-                key.addToDirectSurrogateKeyList(
-                  listOfColumnarKeyBlockDataForDirectSurroagtes.get(colIndex));
+                key.addToNoDictionaryValKeyList(
+                  listOfColumnarKeyBlockDataForNoDictionaryVals.get(colIndex));
             }
 
         }
@@ -172,7 +172,7 @@ public abstract class AbstractColumnarScanResult {
         byte[] completeKeyArray = new byte[keySize];
         for (int i = 0; i < selectedDimensionIndex.length; i++) {
             if (columnarKeyStoreDataHolder[selectedDimensionIndex[i]].getColumnarKeyStoreMetadata()
-                    .isDirectSurrogateColumn()) {
+                    .isNoDictionaryValColumn()) {
                 return columnarKeyStoreDataHolder[selectedDimensionIndex[i]].getKeyBlockData();
             }
 
@@ -193,10 +193,10 @@ public abstract class AbstractColumnarScanResult {
                         new byte[columnarKeyStoreDataHolder[selectedDimensionIndex[i]]
                                 .getColumnarKeyStoreMetadata().getEachRowSize()];
                 if (columnarKeyStoreDataHolder[selectedDimensionIndex[i]]
-                        .getColumnarKeyStoreMetadata().isDirectSurrogateColumn()) {
+                        .getColumnarKeyStoreMetadata().isNoDictionaryValColumn()) {
                     //Incase of high cardinality system has to update the byte array with high
                     //cardinality dimension values.
-                    updateByteArrayWithDirectSurrogateKeyVal(keyVal, columnIndex,
+                    updateByteArrayWithNoDictionaryValKeyVal(keyVal, columnIndex,
                             columnarKeyStoreDataHolder[selectedDimensionIndex[i]]);
                     continue;
                 }

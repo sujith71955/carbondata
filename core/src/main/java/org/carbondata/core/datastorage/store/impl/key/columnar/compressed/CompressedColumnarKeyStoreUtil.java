@@ -49,15 +49,15 @@ public final class CompressedColumnarKeyStoreUtil {
 	public static List<byte[]> readColumnarKeyBlockDataForNoDictionaryCols(
 			byte[] columnarKeyBlockData) {
 		List<byte[]> columnarKeyBlockDataList = new ArrayList<byte[]>(50);
-		ByteBuffer directSurrogateKeyStoreDataHolder = ByteBuffer
+		ByteBuffer noDictionaryValKeyStoreDataHolder = ByteBuffer
 				.allocate(columnarKeyBlockData.length);
-		directSurrogateKeyStoreDataHolder.put(columnarKeyBlockData);
-		directSurrogateKeyStoreDataHolder.flip(); 
-		while (directSurrogateKeyStoreDataHolder.hasRemaining()) {
-			short dataLength = directSurrogateKeyStoreDataHolder.getShort();
-			byte[] directSurrKeyData = new byte[dataLength];
-			directSurrogateKeyStoreDataHolder.get(directSurrKeyData);
-			columnarKeyBlockDataList.add(directSurrKeyData);
+		noDictionaryValKeyStoreDataHolder.put(columnarKeyBlockData);
+		noDictionaryValKeyStoreDataHolder.flip(); 
+		while (noDictionaryValKeyStoreDataHolder.hasRemaining()) {
+			short dataLength = noDictionaryValKeyStoreDataHolder.getShort();
+			byte[] noDictionaryValKeyData = new byte[dataLength];
+			noDictionaryValKeyStoreDataHolder.get(noDictionaryValKeyData);
+			columnarKeyBlockDataList.add(noDictionaryValKeyData);
 		}
 		return columnarKeyBlockDataList;
 
@@ -78,17 +78,17 @@ public final class CompressedColumnarKeyStoreUtil {
 			ColumnarKeyStoreInfo columnarStoreInfo) {
 		ColumnarKeyStoreMetadata columnarKeyStoreMetadata;
 		columnarKeyStoreMetadata = new ColumnarKeyStoreMetadata(0);
-		columnarKeyStoreMetadata.setDirectSurrogateColumn(true);
+		columnarKeyStoreMetadata.setNoDictionaryValColumn(true);
 		columnarKeyStoreMetadata.setColumnIndex(columnKeyBlockIndex);
 		columnarKeyStoreMetadata
 				.setColumnReverseIndex(columnKeyBlockReverseIndex);
 		columnarKeyStoreMetadata
 				.setSorted(columnarStoreInfo.getIsSorted()[blockIndex]);
 		columnarKeyStoreMetadata.setUnCompressed(true);
-		List<byte[]> directSurrogateBasedKeyBlockData = CompressedColumnarKeyStoreUtil
+		List<byte[]> noDictionaryValBasedKeyBlockData = CompressedColumnarKeyStoreUtil
 				.readColumnarKeyBlockDataForNoDictionaryCols(columnarKeyBlockData);
 		ColumnarKeyStoreDataHolder columnarKeyStoreDataHolders = new ColumnarKeyStoreDataHolder(
-				directSurrogateBasedKeyBlockData, columnarKeyStoreMetadata);
+				noDictionaryValBasedKeyBlockData, columnarKeyStoreMetadata);
 		return columnarKeyStoreDataHolders;
 	}
 
@@ -101,8 +101,8 @@ public final class CompressedColumnarKeyStoreUtil {
      */
     public static boolean isNoDictionaryBlock(int[] noDictionaryColIndexes, int blockIndex) {
         if (null != noDictionaryColIndexes) {
-            for (int directSurrogateIndex : noDictionaryColIndexes) {
-                if (directSurrogateIndex == blockIndex) {
+            for (int noDictionaryValIndex : noDictionaryColIndexes) {
+                if (noDictionaryValIndex == blockIndex) {
                     return true;
                 }
             }

@@ -35,7 +35,7 @@ public class RestructureHolder {
     /**
      * 
      */
-    private boolean[] isHighCardinalityNewDims;
+    private boolean[] isNoDictionaryNewDims;
 
 
 	/**
@@ -116,15 +116,15 @@ public class RestructureHolder {
     /*
      * get the new high cardinality dims as part of restructure.
      */
-    public boolean[] getIsHighCardinalityNewDims() {
-		return isHighCardinalityNewDims;
+    public boolean[] getIsNoDictionaryNewDims() {
+		return isNoDictionaryNewDims;
 	}
 
     /**
      * setting the new high cardinality dims as part of restructure
-     * @param isHighCardinalityNewDims
+     * @param isNoDictionaryNewDims
      */
-	public void setIsHighCardinalityNewDims(boolean[] isHighCardinalityNewDims) {
-		this.isHighCardinalityNewDims = isHighCardinalityNewDims;
+	public void setIsNoDictionaryNewDims(boolean[] isNoDictionaryNewDims) {
+		this.isNoDictionaryNewDims = isNoDictionaryNewDims;
 	}
 }
