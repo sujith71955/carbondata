@@ -19,26 +19,33 @@
 
 package org.carbondata.query.filters.measurefilter.util;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.carbondata.common.logging.LogService;
 import org.carbondata.common.logging.LogServiceFactory;
+import org.carbondata.core.cache.Cache;
+import org.carbondata.core.cache.CacheProvider;
+import org.carbondata.core.cache.CacheType;
+import org.carbondata.core.cache.dictionary.Dictionary;
+import org.carbondata.core.cache.dictionary.DictionaryChunksWrapper;
+import org.carbondata.core.cache.dictionary.DictionaryColumnUniqueIdentifier;
+import org.carbondata.core.carbon.SqlStatement.Type;
+import org.carbondata.core.carbon.metadata.schema.table.column.CarbonDimension;
 import org.carbondata.core.constants.CarbonCommonConstants;
 import org.carbondata.core.keygenerator.KeyGenException;
 import org.carbondata.core.keygenerator.KeyGenerator;
 import org.carbondata.core.keygenerator.factory.KeyGeneratorFactory;
-import org.carbondata.core.metadata.CarbonMetadata.Dimension;
-import org.carbondata.core.carbon.SqlStatement.Type;
-import org.carbondata.core.vo.HybridStoreModel;
-import org.carbondata.query.datastorage.TableDataStore;
-import org.carbondata.query.datastorage.InMemoryTable;
+import org.carbondata.query.carbonfilterinterface.ExpressionType;
+import org.carbondata.query.carbonfilterinterface.RowImpl;
+import org.carbondata.query.carbonfilterinterface.RowIntf;
 import org.carbondata.query.datastorage.Member;
 import org.carbondata.query.datastorage.MemberStore;
-import org.carbondata.query.evaluators.FilterEvaluator;
-import org.carbondata.query.evaluators.conditional.dimcolumns.*;
-import org.carbondata.query.evaluators.conditional.row.RowLevelFilterEvalutor;
-import org.carbondata.query.evaluators.logical.AndFilterEvaluator;
-import org.carbondata.query.evaluators.logical.OrFilterEvaluator;
 import org.carbondata.query.expression.BinaryExpression;
 import org.carbondata.query.expression.ColumnExpression;
 import org.carbondata.query.expression.Expression;
@@ -46,13 +53,15 @@ import org.carbondata.query.expression.ExpressionResult;
 import org.carbondata.query.expression.conditional.BinaryConditionalExpression;
 import org.carbondata.query.expression.conditional.ConditionalExpression;
 import org.carbondata.query.expression.exception.FilterUnsupportedException;
-import org.carbondata.query.carbonfilterinterface.ExpressionType;
-import org.carbondata.query.carbonfilterinterface.RowImpl;
-import org.carbondata.query.carbonfilterinterface.RowIntf;
+import org.carbondata.query.filter.resolver.ConditionalFilterResolverImpl;
+import org.carbondata.query.filter.resolver.FilterResolverIntf;
+import org.carbondata.query.filter.resolver.LogicalFilterResolverImpl;
+import org.carbondata.query.filter.resolver.RestructureFilterResolverImpl;
+import org.carbondata.query.filter.resolver.RowLevelFilterResolverImpl;
 import org.carbondata.query.schema.metadata.DimColumnFilterInfo;
 import org.carbondata.query.schema.metadata.FilterEvaluatorInfo;
-import org.carbondata.query.util.DataTypeConverter;
 import org.carbondata.query.util.CarbonEngineLogEvent;
+import org.carbondata.query.util.DataTypeConverter;
 import org.carbondata.query.util.QueryExecutorUtility;
 
 //import org.carbondata.core.engine.util.CarbonEngineLogEvent;
@@ -65,14 +74,14 @@ public final class FilterUtil {
 
     }
 
-    public static FilterEvaluator getFilterEvaluator(Expression expressionTree,
-            FilterEvaluatorInfo info) {
-        FilterEvaluator filterEvaluatorTree = createFilterEvaluatorTree(expressionTree, info);
+    public static FilterResolverIntf getFilterResolver(Expression expressionTree,
+    		FilterEvaluatorInfo info) {
+    	FilterResolverIntf filterEvaluatorTree = createFilterResolverTree(expressionTree, info);
         traverseAndResolveTree(filterEvaluatorTree, info);
         return filterEvaluatorTree;
     }
 
-    private static void traverseAndResolveTree(FilterEvaluator filterEvaluatorTree,
+    private static void traverseAndResolveTree(FilterResolverIntf filterEvaluatorTree,
             FilterEvaluatorInfo info) {
         if (null == filterEvaluatorTree) {
             return;
@@ -84,45 +93,45 @@ public final class FilterUtil {
         traverseAndResolveTree(filterEvaluatorTree.getRight(), info);
     }
 
-    private static FilterEvaluator createFilterEvaluatorTree(Expression expressionTree,
+    private static FilterResolverIntf createFilterResolverTree(Expression expressionTree,
             FilterEvaluatorInfo info) {
         ExpressionType filterExpressionType = expressionTree.getFilterExpressionType();
         BinaryExpression currentExpression = null;
         switch (filterExpressionType) {
         case OR:
             currentExpression = (BinaryExpression) expressionTree;
-            return new OrFilterEvaluator(
-                    createFilterEvaluatorTree(currentExpression.getLeft(), info),
-                    createFilterEvaluatorTree(currentExpression.getRight(), info));
+            return new LogicalFilterResolverImpl(
+                    createFilterResolverTree(currentExpression.getLeft(), info),
+                    createFilterResolverTree(currentExpression.getRight(), info),filterExpressionType);
         case AND:
             currentExpression = (BinaryExpression) expressionTree;
-            return new AndFilterEvaluator(
-                    createFilterEvaluatorTree(currentExpression.getLeft(), info),
-                    createFilterEvaluatorTree(currentExpression.getRight(), info));
+            return new LogicalFilterResolverImpl(
+                    createFilterResolverTree(currentExpression.getLeft(), info),
+                    createFilterResolverTree(currentExpression.getRight(), info),filterExpressionType);
         case EQUALS:
         case IN:
-            return getConditionalFilterEvalutor(ExpressionType.EQUALS, false, expressionTree, info,
+            return getFilterResolverBasedOnExpressionType(ExpressionType.EQUALS, false, expressionTree, info,
                     expressionTree);
 
         case GREATERTHAN:
         case GREATERYHAN_EQUALTO:
         case LESSTHAN:
         case LESSTHAN_EQUALTO:
-            return getConditionalFilterEvalutor(ExpressionType.EQUALS, true, expressionTree, info,
+            return getFilterResolverBasedOnExpressionType(ExpressionType.EQUALS, true, expressionTree, info,
                     expressionTree);
 
         case NOT_EQUALS:
         case NOT_IN:
-            return getConditionalFilterEvalutor(ExpressionType.NOT_EQUALS, false, expressionTree,
+            return getFilterResolverBasedOnExpressionType(ExpressionType.NOT_EQUALS, false, expressionTree,
                     info, expressionTree);
 
         default:
-            return getConditionalFilterEvalutor(ExpressionType.UNKNOWN, false, expressionTree, info,
+            return getFilterResolverBasedOnExpressionType(ExpressionType.UNKNOWN, false, expressionTree, info,
                     expressionTree);
         }
     }
 
-    private static FilterEvaluator getConditionalFilterEvalutor(ExpressionType filterExpressionType,
+    private static FilterResolverIntf getFilterResolverBasedOnExpressionType(ExpressionType filterExpressionType,
             boolean isExpressionResolve, Expression expression, FilterEvaluatorInfo info,
             Expression expressionTree) {
         BinaryConditionalExpression currentCondExpression = null;
@@ -135,18 +144,16 @@ public final class FilterUtil {
                             != Type.ARRAY &&
                     currentCondExpression.getColumnList().get(0).getDim().getDataType()
                             != Type.STRUCT) {
-
+               //getting new dim index.
                 int newDimensionIndex = QueryExecutorUtility.isNewDimension(info.getNewDimension(),
                         currentCondExpression.getColumnList().get(0).getDim());
                 if (newDimensionIndex == -1) {
-                    TableDataStore dataCache = info.getSlices().get(info.getCurrentSliceIndex())
-                            .getDataCache(info.getFactTableName());
                     if (currentCondExpression.getColumnList().get(0).getDim()
                             .isNoDictionaryDim()) {
                         if (checkIfExpressionContainsColumn(currentCondExpression.getLeft())
                                 || checkIfExpressionContainsColumn(
                                 currentCondExpression.getRight())) {
-                            return new RowLevelFilterEvalutor(expression, isExpressionResolve,
+                            return new RowLevelFilterResolverImpl(expression, isExpressionResolve,
                                     true);
                         }
 
@@ -157,24 +164,20 @@ public final class FilterUtil {
                                 == ExpressionType.GREATERYHAN_EQUALTO
                                 || expressionTree.getFilterExpressionType()
                                 == ExpressionType.LESSTHAN_EQUALTO) {
-                            return new RowLevelFilterEvalutor(expression, isExpressionResolve,
+                            return new RowLevelFilterResolverImpl(expression, isExpressionResolve,
                                     true);
                         }
-                        return new NonUniqueBlockEqualsEvalutor(expression, isExpressionResolve,
+                        return new ConditionalFilterResolverImpl(expression, isExpressionResolve,
                                 true);
-                    } else if (dataCache.getAggKeyBlock()[getDimensionStoreOrdinal(
-                            currentCondExpression.getColumnList().get(0).getDim().getOrdinal(),
-                            info.getHybridStoreModel())]) {
-                        return new UniqueBlockEqualsEvalutor(expression, isExpressionResolve, true);
-                    } else {
-                        return new NonUniqueBlockEqualsEvalutor(expression, isExpressionResolve,
+                    }else {
+                        return new ConditionalFilterResolverImpl(expression, isExpressionResolve,
                                 true);
                     }
                 } else {
-                    return new RestructureEqualsEvaluator(expression,
+                    return new RestructureFilterResolverImpl(expression,
                             info.getNewDimensionDefaultValue()[newDimensionIndex],
                             info.getNewDimensionSurrogates()[newDimensionIndex],
-                            isExpressionResolve);
+                            isExpressionResolve,true);
                 }
             }
         case NOT_EQUALS:
@@ -188,14 +191,12 @@ public final class FilterUtil {
                 int newDimensionIndex = QueryExecutorUtility.isNewDimension(info.getNewDimension(),
                         currentCondExpression.getColumnList().get(0).getDim());
                 if (newDimensionIndex == -1) {
-                    TableDataStore dataCache = info.getSlices().get(info.getCurrentSliceIndex())
-                            .getDataCache(info.getFactTableName());
                     if (currentCondExpression.getColumnList().get(0).getDim()
                             .isNoDictionaryDim()) {
                         if (checkIfExpressionContainsColumn(currentCondExpression.getLeft())
                                 || checkIfExpressionContainsColumn(
                                 currentCondExpression.getRight())) {
-                            return new RowLevelFilterEvalutor(expression, isExpressionResolve,
+                            return new RowLevelFilterResolverImpl(expression, isExpressionResolve,
                                     false);
                         }
                         if (expressionTree.getFilterExpressionType() == ExpressionType.GREATERTHAN
@@ -205,25 +206,19 @@ public final class FilterUtil {
                                 == ExpressionType.GREATERYHAN_EQUALTO
                                 || expressionTree.getFilterExpressionType()
                                 == ExpressionType.LESSTHAN_EQUALTO) {
-                            return new RowLevelFilterEvalutor(expression, isExpressionResolve,
+                            return new RowLevelFilterResolverImpl(expression, isExpressionResolve,
                                     false);
                         }
-                        return new NonUniqueBlockNotEqualsEvaluator(expression, isExpressionResolve,
+                        return new ConditionalFilterResolverImpl(expression, isExpressionResolve,
                                 false);
                     }
-                    if (dataCache.getAggKeyBlock()[currentCondExpression.getColumnList().get(0)
-                            .getDim().getOrdinal()]) {
-                        return new UniqueBlockNotEqualsEvaluator(expression, isExpressionResolve,
-                                false);
-                    } else {
-                        return new NonUniqueBlockNotEqualsEvaluator(expression, isExpressionResolve,
-                                false);
-                    }
+                    return new ConditionalFilterResolverImpl(expression, isExpressionResolve,
+                            false);
                 } else {
-                    return new RestructureNotEqualsEvaluator(expression,
+                    return new RestructureFilterResolverImpl(expression,
                             info.getNewDimensionDefaultValue()[newDimensionIndex],
                             info.getNewDimensionSurrogates()[newDimensionIndex],
-                            isExpressionResolve);
+                            isExpressionResolve,false);
                 }
             }
         default:
@@ -237,43 +232,33 @@ public final class FilterUtil {
                             .isNewDimension(info.getNewDimension(),
                                     condExpression.getColumnList().get(0).getDim());
                     if (newDimensionIndex == -1) {
-                        TableDataStore dataCache = info.getSlices().get(info.getCurrentSliceIndex())
-                                .getDataCache(info.getFactTableName());
                         if (condExpression.getColumnList().get(0).getDim().isNoDictionaryDim()) {
                             if (checkIfExpressionContainsColumn(currentCondExpression.getLeft())
                                     || checkIfExpressionContainsColumn(
                                     currentCondExpression.getRight())) {
-                                return new RowLevelFilterEvalutor(expression, isExpressionResolve,
+                                return new RowLevelFilterResolverImpl(expression, isExpressionResolve,
                                         false);
                             } else if (expressionTree.getFilterExpressionType()
                                     == ExpressionType.UNKNOWN) {
-                                return new RowLevelFilterEvalutor(expression, false, false);
+                                return new RowLevelFilterResolverImpl(expression, false, false);
                             }
-                            return new NonUniqueBlockEqualsEvalutor(expression, true, true);
+                            return new ConditionalFilterResolverImpl(expression, true, true);
                         }
-                        if (dataCache.getAggKeyBlock()[condExpression.getColumnList().get(0)
-                                .getDim().getOrdinal()]) {
-                            return new UniqueBlockEqualsEvalutor(expression, true, true);
-                        } else {
-                            return new NonUniqueBlockEqualsEvalutor(expression, true, true);
-                        }
+                  
+                            return new ConditionalFilterResolverImpl(expression, true, true);
+                        
                     } else {
-                        return new RestructureEqualsEvaluator(expression,
+                        return new RestructureFilterResolverImpl(expression,
                                 info.getNewDimensionDefaultValue()[newDimensionIndex],
-                                info.getNewDimensionSurrogates()[newDimensionIndex], true);
+                                info.getNewDimensionSurrogates()[newDimensionIndex], true,true);
                     }
                 } else {
-                    return new RowLevelFilterEvalutor(expression, false, false);
+                    return new RowLevelFilterResolverImpl(expression, false, false);
                 }
             } else {
-                return new RowLevelFilterEvalutor(expression, false, false);
+                return new RowLevelFilterResolverImpl(expression, false, false);
             }
         }
-    }
-
-    private static int getDimensionStoreOrdinal(int ordinal, HybridStoreModel hybridStoreModel) {
-        return hybridStoreModel.getStoreIndex(ordinal);
-
     }
 
     /**
@@ -341,74 +326,81 @@ public final class FilterUtil {
         return filterValuesList;
     }
 
-    public static List<byte[]> getFilterValues(FilterEvaluatorInfo info,
-            ColumnExpression columnExpression, List<String> evaluateResultList,
-            boolean isIncludeFilter)
+	public static List<byte[]> getFilterValues(FilterEvaluatorInfo info,
+			ColumnExpression columnExpression, List<String> evaluateResultList,
+			boolean isIncludeFilter)
 
-    {
-        List<byte[]> filterValuesList = new ArrayList<byte[]>(20);
-        //        if(columnExpression.getDim().getDataType() == Type.ARRAY ||
-        //                columnExpression.getDim().getDataType() == Type.STRUCT)
-        //        {
-        //            return filterValuesList;
-        //        }
-        int[] keys = new int[info.getKeyGenerator().getDimCount()];
-        Arrays.fill(keys, 0);
-        int[] rangesForMaskedByte = getRangesForMaskedByte(
-                info.getHybridStoreModel().getMdKeyOrdinal(columnExpression.getDim().getOrdinal()),
-                info.getKeyGenerator());
-        List<Integer> surrogates = new ArrayList<Integer>(20);
-        for (String result : evaluateResultList) {
-            Integer surrogate = getSurrogate(result, info.getSlices(), info.getCurrentSliceIndex(),
-                    columnExpression.getDim());
-            if (null != surrogate) {
-                surrogates.add(surrogate);
-            }
-        }
+	{
+		List<byte[]> filterValuesList = new ArrayList<byte[]>(20);
+		int[] keys = new int[info.getKeyGenerator().getDimCount()];
+		Arrays.fill(keys, 0);
+		int[] rangesForMaskedByte = getRangesForMaskedByte(
+				(columnExpression.getDimension().getOrdinal()), info
+						.getTableSegment().getSegmentProperties()
+						.getDimensionKeyGenerator());
+		List<Integer> surrogates = new ArrayList<Integer>(20);
+		for (String resultVal : evaluateResultList) {
+			// Reading the dictionary value from cache.
+			Integer dictionaryVal = getDictionaryValue(resultVal, info,
+					columnExpression.getDimension());
+			if (null != dictionaryVal) {
+				surrogates.add(dictionaryVal);
+			}
+		}
+		Collections.sort(surrogates);
+		// CHECKSTYLE:OFF Approval No:Approval-V1R2C10_007
+		for (Integer surrogate : surrogates) {
+			try {
+				keys[columnExpression.getDimension().getOrdinal()] = surrogate;
+				filterValuesList.add(getMaskedKey(rangesForMaskedByte, info
+						.getTableSegment().getSegmentProperties()
+						.getDimensionKeyGenerator().generateKey(keys)));
+			} catch (KeyGenException e) {
+				LOGGER.error(CarbonEngineLogEvent.UNIBI_CARBONENGINE_MSG,
+						e.getMessage());
+			}
+		}
+		// CHECKSTYLE:ON
+		DimColumnFilterInfo columnFilterInfo = null;
+		if (surrogates.size() > 0) {
+			columnFilterInfo = new DimColumnFilterInfo();
+			columnFilterInfo.setIncludeFilter(isIncludeFilter);
+			columnFilterInfo.setFilterList(surrogates);
+			info.getInfo().addDimensionFilter(columnExpression.getDim(),
+					columnFilterInfo);
+		}
+		return filterValuesList;
+	}
 
-        Collections.sort(surrogates);
-
-        //CHECKSTYLE:OFF Approval No:Approval-V1R2C10_007
-        for (Integer surrogate : surrogates) {
-            try {
-                keys[info.getHybridStoreModel()
-                        .getMdKeyOrdinal(columnExpression.getDim().getOrdinal())] = surrogate;
-                filterValuesList.add(getMaskedKey(rangesForMaskedByte,
-                        info.getKeyGenerator().generateKey(keys)));
-            } catch (KeyGenException e) {
-                LOGGER.error(CarbonEngineLogEvent.UNIBI_CARBONENGINE_MSG, e.getMessage());
-            }
-        }
-        //CHECKSTYLE:ON
-
-        DimColumnFilterInfo columnFilterInfo = null;
-        if (surrogates.size() > 0) {
-            columnFilterInfo = new DimColumnFilterInfo();
-            columnFilterInfo.setIncludeFilter(isIncludeFilter);
-            columnFilterInfo.setFilterList(surrogates);
-            info.getInfo().addDimensionFilter(columnExpression.getDim(), columnFilterInfo);
-        }
-        return filterValuesList;
-    }
-
-    private static Integer getSurrogate(String value, List<InMemoryTable> slices,
-            int currentSliceIndex, Dimension dim) {
-        int surrLoc = 0;
-        MemberStore memberStore = null;
-        for (int i = 0; i <= currentSliceIndex; i++) {
-            memberStore = slices.get(i).getMemberCache(
-                    dim.getTableName() + '_' + dim.getColName() + '_' + dim.getDimName() + '_' + dim
-                            .getHierName());
-            if (null == memberStore) {
-                continue;
-            }
-            surrLoc = memberStore.getMemberId(value, dim.isActualCol());
-            if (surrLoc > 0) {
-                return surrLoc;
-            }
-        }
-        return null;
-    }
+	/**
+	 * This API will get the Dictionary value for the respective filter member
+	 * string.
+	 * 
+	 * @param value
+	 *            filter value
+	 * @param filterEval
+	 * @param dim
+	 *            , column expression dimension type.
+	 * @return the dictionary value.
+	 */
+	private static Integer getDictionaryValue(String value,
+			FilterEvaluatorInfo filterEval, CarbonDimension dim) {
+		DictionaryColumnUniqueIdentifier dictionaryColumnUniqueIdentifier = new DictionaryColumnUniqueIdentifier(
+				filterEval.getAbsoluteTableIdentifier()
+						.getCarbonTableIdentifier(), String.valueOf(dim
+						.getColumnId()));
+		CacheProvider cacheProvider = CacheProvider.getInstance();
+		Cache forwardDictionaryCache = cacheProvider.createCache(
+				CacheType.FORWARD_DICTIONARY, filterEval
+						.getAbsoluteTableIdentifier().getStorePath());
+		// get the forward dictionary object
+		Dictionary forwardDictionary = (Dictionary) forwardDictionaryCache
+				.get(dictionaryColumnUniqueIdentifier);
+		if (null != forwardDictionary) {
+			forwardDictionary.getSurrogateKey(value);
+		}
+		return null;
+	}
 
     public static byte[][] getFilterListForAllMembers(FilterEvaluatorInfo info,
             Expression expression, ColumnExpression columnExpression, boolean isIncludeFilter) {
@@ -457,7 +449,50 @@ public final class FilterUtil {
                 getFilterValues(info, columnExpression, evaluateResultListFinal, isIncludeFilter);
         return filterValuesList.toArray(new byte[filterValuesList.size()][]);
     }
-
+    public static byte[][] getFilterListForAllValues(FilterEvaluatorInfo info,
+            Expression expression, ColumnExpression columnExpression, boolean isIncludeFilter) {
+    	DictionaryColumnUniqueIdentifier dictionaryColumnUniqueIdentifier = new DictionaryColumnUniqueIdentifier(
+    			info.getAbsoluteTableIdentifier().getCarbonTableIdentifier(),
+				String.valueOf(columnExpression.getDimension().getColumnId()));
+		CacheProvider cacheProvider = CacheProvider.getInstance();
+		Cache forwardDictionaryCache = cacheProvider.createCache(
+				CacheType.FORWARD_DICTIONARY, info.getAbsoluteTableIdentifier()
+						.getStorePath());
+		// get the forward dictionary object
+		Dictionary forwardDictionary = (Dictionary) forwardDictionaryCache
+				.get(dictionaryColumnUniqueIdentifier);
+		 List<byte[]> filterValuesList = null;
+	        List<String> evaluateResultListFinal = new ArrayList<String>(20);
+		DictionaryChunksWrapper dictionaryWrapper=forwardDictionary.getDictionaryChunks();
+		while(dictionaryWrapper.hasNext())
+		{
+			byte[] columnVal= dictionaryWrapper.next();
+			try {
+                RowIntf row = new RowImpl();
+                String stringValue =new String(columnVal);
+                if (stringValue.equals(CarbonCommonConstants.MEMBER_DEFAULT_VAL)) {
+                	stringValue = null;
+                }
+                row.setValues(new Object[] { DataTypeConverter
+                        .getDataBasedOnDataType(stringValue,
+                                columnExpression.getDim().getDataType()) });
+                Boolean rslt = expression.evaluate(row).getBoolean();
+                if (null != rslt && !(rslt ^ isIncludeFilter)) {
+                    if (null == stringValue) {
+                        evaluateResultListFinal
+                                .add(CarbonCommonConstants.MEMBER_DEFAULT_VAL);
+                    } else {
+                        evaluateResultListFinal.add(stringValue);
+                    }
+                }
+            } catch (FilterUnsupportedException e) {
+                LOGGER.audit(e.getMessage());
+            }
+		}
+		filterValuesList =
+                getFilterValues(info, columnExpression, evaluateResultListFinal, isIncludeFilter);
+        return filterValuesList.toArray(new byte[filterValuesList.size()][]);
+    }
     public static byte[][] getFilterList(FilterEvaluatorInfo info, Expression expression,
             ColumnExpression columnExpression, boolean isIncludeFilter) {
         List<byte[]> filterValuesList = new ArrayList<byte[]>(20);

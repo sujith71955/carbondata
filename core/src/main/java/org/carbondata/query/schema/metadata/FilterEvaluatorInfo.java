@@ -22,6 +22,8 @@ package org.carbondata.query.schema.metadata;
 import java.util.List;
 import java.util.Map;
 
+import org.carbondata.core.carbon.AbsoluteTableIdentifier;
+import org.carbondata.core.carbon.datastore.block.TableSegment;
 import org.carbondata.core.keygenerator.KeyGenerator;
 import org.carbondata.core.metadata.CarbonMetadata.Dimension;
 import org.carbondata.core.vo.HybridStoreModel;
@@ -31,8 +33,17 @@ import org.carbondata.query.executer.impl.QueryFilterInfo;
 
 public class FilterEvaluatorInfo {
     private List<InMemoryTable> slices;
-
-    private KeyGenerator keyGenerator;
+    private TableSegment tableSegment;
+    /**
+     * This reference will provide details of store inorder to get
+     * cache
+     */
+    private AbsoluteTableIdentifier absoluteTableIdentifier;
+   
+	/**
+     * Required for getting the masked MDKey.
+     */
+	private KeyGenerator keyGenerator;
 
     private int currentSliceIndex;
 
@@ -161,4 +172,21 @@ public class FilterEvaluatorInfo {
         this.hybridStoreModel = hybridStoreModel;
 
     }
+    public TableSegment getTableSegment() {
+		return tableSegment;
+	}
+
+	public void setTableSegment(TableSegment tableSegment) {
+		this.tableSegment = tableSegment;
+	}
+
+	public AbsoluteTableIdentifier getAbsoluteTableIdentifier() {
+		return absoluteTableIdentifier;
+	}
+
+	public void setAbsoluteTableIdentifier(
+			AbsoluteTableIdentifier absoluteTableIdentifier) {
+		this.absoluteTableIdentifier = absoluteTableIdentifier;
+	}
+
 }

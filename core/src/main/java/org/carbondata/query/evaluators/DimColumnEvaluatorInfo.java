@@ -22,6 +22,7 @@ package org.carbondata.query.evaluators;
 import java.util.List;
 import java.util.Map;
 
+import org.carbondata.core.carbon.metadata.schema.table.column.CarbonDimension;
 import org.carbondata.core.metadata.CarbonMetadata.Dimension;
 import org.carbondata.query.complex.querytypes.GenericQueryType;
 import org.carbondata.query.datastorage.InMemoryTable;
@@ -71,6 +72,8 @@ public class DimColumnEvaluatorInfo {
     private String defaultValue;
 
     private Map<Integer, GenericQueryType> complexTypesWithBlockStartIndex;
+    
+	private CarbonDimension dimension;
 
     public Map<Integer, GenericQueryType> getComplexTypesWithBlockStartIndex() {
         return complexTypesWithBlockStartIndex;
@@ -80,6 +83,14 @@ public class DimColumnEvaluatorInfo {
             Map<Integer, GenericQueryType> complexTypesWithBlockStartIndex) {
         this.complexTypesWithBlockStartIndex = complexTypesWithBlockStartIndex;
     }
+    
+    public CarbonDimension getDimension() {
+		return dimension;
+	}
+
+	public void setDimension(CarbonDimension dimension) {
+		this.dimension = dimension;
+	}
 
     public Dimension[] getDimensions() {
         return dimensions;
