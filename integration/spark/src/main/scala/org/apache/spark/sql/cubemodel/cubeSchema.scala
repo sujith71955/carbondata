@@ -157,8 +157,8 @@ class CubeNewProcessor(cm: tableModel, sqlContext: SQLContext) {
     columnSchema.setColumnName(colName)
     columnSchema.setColumnUniqueId(UUID.randomUUID().toString())
     columnSchema.setColumnar(isCol)
-    val encoderSet = new java.util.HashSet(encoders)
-    columnSchema.setEncodintList(encoderSet)
+    val encoderSet = new java.util.ArrayList(encoders)
+    columnSchema.setEncodingList(encoderSet)
     columnSchema.setDimensionColumn(isDimensionCol)
     columnSchema.setColumnGroup(colGroup)
     //TODO: Need to fill RowGroupID, Precision, Scala, converted type & Number of Children after DDL finalization

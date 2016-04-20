@@ -18,7 +18,7 @@
  */
 package org.carbondata.core.carbon.datastore.impl.btree;
 
-import org.carbondata.core.carbon.datastore.IndexesBuilderInfo;
+import org.carbondata.core.carbon.datastore.BTreeBuilderInfo;
 import org.carbondata.core.carbon.metadata.leafnode.indexes.LeafNodeMinMaxIndex;
 
 /**
@@ -35,7 +35,7 @@ public class BlockBtreeLeafNode extends AbstractBtreeLeafNode {
      * @param leafIndex     leaf node index
      * @param metadataIndex metadata index
      */
-    public BlockBtreeLeafNode(IndexesBuilderInfo builderInfos, int metadataIndex, long nodeNumber) {
+    public BlockBtreeLeafNode(BTreeBuilderInfo builderInfos, int metadataIndex, long nodeNumber) {
         LeafNodeMinMaxIndex minMaxIndex =
                 builderInfos.getDataFileMetadataList().get(metadataIndex).getLeafNodeIndex()
                         .getMinMaxIndex();

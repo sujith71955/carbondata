@@ -25,7 +25,7 @@ import org.carbondata.core.carbon.metadata.leafnode.DataFileMetadata;
 /**
  * below class holds the meta data requires to build the blocks
  */
-public class IndexesBuilderInfo {
+public class BTreeBuilderInfo {
 
     /**
      * holds all the information about data

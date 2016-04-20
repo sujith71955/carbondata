@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.carbondata.core.carbon.datastore.DataRefNode;
 import org.carbondata.core.carbon.datastore.BtreeBuilder;
-import org.carbondata.core.carbon.datastore.IndexesBuilderInfo;
+import org.carbondata.core.carbon.datastore.BTreeBuilderInfo;
 import org.carbondata.core.carbon.datastore.impl.btree.BlockBtreeBuilder;
 import org.carbondata.core.carbon.metadata.leafnode.DataFileMetadata;
 
@@ -55,7 +55,7 @@ public class TableSegment {
         segmentProperties = new SegmentProperties(datFileMetadataList.get(0).getColumnInTable(),
         		datFileMetadataList.get(0).getSegmentInfo().getColumnCardinality());
         // create a segment builder info
-        IndexesBuilderInfo segmentBuilderInfos = new IndexesBuilderInfo();
+        BTreeBuilderInfo segmentBuilderInfos = new BTreeBuilderInfo();
         segmentBuilderInfos.setDataFileMetadataList(datFileMetadataList);
         BtreeBuilder blocksBuilder = new BlockBtreeBuilder();
         // load the metadata

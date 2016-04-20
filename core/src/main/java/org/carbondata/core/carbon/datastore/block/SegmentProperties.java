@@ -232,7 +232,7 @@ public class SegmentProperties {
 
                         // below code to handle first dimension of the column group
                         // in this case ordinal of the column group will be 0
-                        if (previousColumnGroup != columnSchema.getRowGroupId()) {
+                        if (previousColumnGroup != columnSchema.getColumnGroupId()) {
                             columnGroupOrdinal = 0;
                             carbonDimension = new CarbonDimension(columnSchema, ++dimensonOrdinal,
                                     keyOrdinal++, columnGroupOrdinal++);
@@ -243,7 +243,7 @@ public class SegmentProperties {
                             carbonDimension = new CarbonDimension(columnSchema, ++dimensonOrdinal,
                                     keyOrdinal++, columnGroupOrdinal++);
                         }
-                        previousColumnGroup = columnSchema.getRowGroupId();
+                        previousColumnGroup = columnSchema.getColumnGroupId();
                     }
                 }
                 // as complex type will be stored at last so once complex type started all the dimension will be

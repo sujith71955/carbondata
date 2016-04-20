@@ -144,12 +144,12 @@ public class DataFileMetadataConverter {
         for (org.carbondata.format.Encoding encoder : externalColumnSchema.getEncoders()) {
             encoders.add(fromExternalToWrapperEncoding(encoder));
         }
-        wrapperColumnSchema.setEncodintList(encoders);
+        wrapperColumnSchema.setEncodingList(encoders);
         wrapperColumnSchema.setConvertedType(thriftConvertedTypeToWrapperConvertedTypeConverter(
                 externalColumnSchema.getConverted_type()));
         wrapperColumnSchema.setNumberOfChild(externalColumnSchema.getNum_child());
         wrapperColumnSchema.setPrecision(externalColumnSchema.getPrecision());
-        wrapperColumnSchema.setRowGroupId(externalColumnSchema.getColumn_group_id());
+        wrapperColumnSchema.setColumnGroup(externalColumnSchema.getColumn_group_id());
         wrapperColumnSchema.setScale(externalColumnSchema.getScale());
         wrapperColumnSchema.setDefaultValue(externalColumnSchema.getDefault_value());
         wrapperColumnSchema.setAggregateFunction(externalColumnSchema.getAggregate_function());

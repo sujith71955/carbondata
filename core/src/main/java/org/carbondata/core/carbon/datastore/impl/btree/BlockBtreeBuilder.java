@@ -42,7 +42,7 @@ import java.util.List;
 import org.carbondata.common.logging.LogService;
 import org.carbondata.common.logging.LogServiceFactory;
 import org.carbondata.core.carbon.datastore.IndexKey;
-import org.carbondata.core.carbon.datastore.IndexesBuilderInfo;
+import org.carbondata.core.carbon.datastore.BTreeBuilderInfo;
 import org.carbondata.core.constants.CarbonCommonConstants;
 import org.carbondata.query.util.CarbonEngineLogEvent;
 
@@ -65,7 +65,7 @@ public class BlockBtreeBuilder extends AbstractBtreeBuilder {
      * in our case one leaf node will have not only one entry it will have group
      * of entries
      */
-    @Override public void build(IndexesBuilderInfo segmentBuilderInfos) {
+    @Override public void build(BTreeBuilderInfo segmentBuilderInfos) {
         int groupCounter;
         int nInternal = 0;
         BTreeNode curNode = null;

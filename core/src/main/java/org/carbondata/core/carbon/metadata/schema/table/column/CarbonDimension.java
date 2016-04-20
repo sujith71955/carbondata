@@ -21,7 +21,6 @@ package org.carbondata.core.carbon.metadata.schema.table.column;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.carbondata.core.carbon.metadata.datatype.ConvertedType;
 import org.carbondata.core.carbon.metadata.datatype.DataType;
@@ -55,74 +54,81 @@ public class CarbonDimension implements Serializable {
      * table ordinal
      */
     protected int ordinal;
-    
+
     /**
      * List of child dimension for complex type
      */
     private List<CarbonDimension> listOfChildDimensions;
-    
+
     /**
-     * default value for in case of restructuring will be used 
+     * default value for in case of restructuring will be used
      * when older segment does not have particular column
      */
     protected byte[] defaultValue;
-    
-    /**
-     * ordinal of column in table
-     */
-    protected int tableOrdinal;
 
-    public CarbonDimension(ColumnSchema columnSchema, int ordinal,int tableOrdinal) {
+    /**
+     * in case of dictionary dimension this will store the ordinal
+     * of the dimension in mdkey
+     */
+    private int keyOrdinal;
+
+    /**
+     * column group column ordinal
+     * for example if column is second column in the group
+     * it will store 2
+     */
+    private int columnGroupOrdinal;
+
+    public CarbonDimension(ColumnSchema columnSchema, int ordinal, int keyOrdinal,
+            int columnGroupOrdinal) {
         this.columnSchema = columnSchema;
         this.ordinal = ordinal;
-        this.tableOrdinal=tableOrdinal;
+        this.keyOrdinal = keyOrdinal;
+        this.columnGroupOrdinal = columnGroupOrdinal;
     }
 
     /**
      * this method will initialize list based on number of child dimensions Count
      */
-    public void initializeChildDimensionsList(int childDimensions)
-    {
+    public void initializeChildDimensionsList(int childDimensions) {
         listOfChildDimensions = new ArrayList<CarbonDimension>(childDimensions);
     }
-    
+
     /**
      * @return convertedType
      */
-    public ConvertedType getConvertedType()
-    {
-    	return columnSchema.getConvertedType();
+    public ConvertedType getConvertedType() {
+        return columnSchema.getConvertedType();
     }
-    
+
     /**
      * @return number of children for complex type
      */
-    public int getNumberOfChild()
-    {
-    	return columnSchema.getNumberOfChild();
+    public int getNumberOfChild() {
+        return columnSchema.getNumberOfChild();
     }
-    
+
     /**
      * @return columnar or row based
      */
-    public boolean isColumnar()
-    {
-    	return columnSchema.isColumnar();
+    public boolean isColumnar() {
+        return columnSchema.isColumnar();
     }
 
     /**
      * @return list of children dims for complex type
      */
     public List<CarbonDimension> getListOfChildDimensions() {
-      return listOfChildDimensions;
+        return listOfChildDimensions;
     }
-    
+
     /**
      * @param listOfChildDimensions
      */
     public void setListOfChildDimensions(List<CarbonDimension> listOfChildDimensions) {
-      this.listOfChildDimensions = listOfChildDimensions;
+        this.listOfChildDimensions = listOfChildDimensions;
     }
+
     /**
      * @return column unique id
      */
@@ -189,7 +195,7 @@ public class CarbonDimension implements Serializable {
     /**
      * @return the list of encoder used in dimension
      */
-    public Set<Encoding> getEncoder() {
+    public List<Encoding> getEncoder() {
         return columnSchema.getEncodingList();
     }
 
@@ -208,27 +214,20 @@ public class CarbonDimension implements Serializable {
     }
 
     /**
-	 * @return the defaultValue
-	 */
-	public byte[] getDefaultValue() {
-		return defaultValue;
-	}
+     * @return the defaultValue
+     */
+    public byte[] getDefaultValue() {
+        return defaultValue;
+    }
 
-	/**
-	 * @param defaultValue the defaultValue to set
-	 */
-	public void setDefaultValue(byte[] defaultValue) {
-		this.defaultValue = defaultValue;
-	}
+    /**
+     * @param defaultValue the defaultValue to set
+     */
+    public void setDefaultValue(byte[] defaultValue) {
+        this.defaultValue = defaultValue;
+    }
 
-	/**
-	 * @return the tableOrdinal
-	 */
-	public int getTableOrdinal() {
-		return tableOrdinal;
-	}
-
-	/**
+    /**
      * to generate the hash code for this class
      */
     @Override public int hashCode() {
@@ -261,8 +260,36 @@ public class CarbonDimension implements Serializable {
         }
         return true;
     }
-    
-    public boolean hasEncoding(Encoding encoding){
-    	return columnSchema.getEncodingList().contains(encoding);
+
+    public boolean hasEncoding(Encoding encoding) {
+        return columnSchema.getEncodingList().contains(encoding);
+    }
+
+    /**
+     * @return the keyOrdinal
+     */
+    public int getKeyOrdinal() {
+        return keyOrdinal;
+    }
+
+    /**
+     * @param keyOrdinal the keyOrdinal to set
+     */
+    public void setKeyOrdinal(int keyOrdinal) {
+        this.keyOrdinal = keyOrdinal;
+    }
+
+    /**
+     * @return the columnGroupOrdinal
+     */
+    public int getColumnGroupOrdinal() {
+        return columnGroupOrdinal;
+    }
+
+    /**
+     * @param columnGroupOrdinal the columnGroupOrdinal to set
+     */
+    public void setColumnGroupOrdinal(int columnGroupOrdinal) {
+        this.columnGroupOrdinal = columnGroupOrdinal;
     }
 }

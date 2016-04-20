@@ -135,15 +135,15 @@ public class CarbonTable implements Serializable {
             	{
             		dimensions.add(new CarbonDimension(columnSchema, dimensionOrdinal++,-1,-1));
             	}
-            	else if(columnSchema.getEncodingList().contains(Encoding.DICTIONARY) && columnSchema.getRowGroupId()==-1)
+            	else if(columnSchema.getEncodingList().contains(Encoding.DICTIONARY) && columnSchema.getColumnGroupId()==-1)
             	{
             		dimensions.add(new CarbonDimension(columnSchema, dimensionOrdinal++,keyOrdinal++,-1));
             	}
             	else
             	{
             		columnGroupOrdinal = previousColumnGroupId == columnSchema
-						.getRowGroupId() ? ++columnGroupOrdinal : 0;
-            		previousColumnGroupId=columnSchema.getRowGroupId();
+						.getColumnGroupId() ? ++columnGroupOrdinal : 0;
+            		previousColumnGroupId=columnSchema.getColumnGroupId();
             		dimensions.add(new CarbonDimension(columnSchema, dimensionOrdinal++,keyOrdinal++,columnGroupOrdinal));
             		
 				}

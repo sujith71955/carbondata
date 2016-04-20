@@ -27,7 +27,7 @@ public interface BtreeBuilder {
     /**
      * Below method will be used to store the leaf collection in some data structure
      */
-    void build(IndexesBuilderInfo blocksBuilderInfos);
+    void build(BTreeBuilderInfo blocksBuilderInfos);
 
     /**
      * below method to get the first data block

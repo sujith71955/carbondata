@@ -21,7 +21,7 @@ public class BtreeBlockFinderTest extends TestCase {
     @Test public void testBtreeBuldingIsPorper() {
         BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getDataFileMetadataList();
-        IndexesBuilderInfo infos = new IndexesBuilderInfo();
+        BTreeBuilderInfo infos = new BTreeBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
 
@@ -30,7 +30,7 @@ public class BtreeBlockFinderTest extends TestCase {
     @Test public void testBtreeBuilderGetMethodIsGivingNotNullRootNode() {
         BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getDataFileMetadataList();
-        IndexesBuilderInfo infos = new IndexesBuilderInfo();
+        BTreeBuilderInfo infos = new BTreeBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
         DataRefNode dataBlock = builder.get();
@@ -44,7 +44,7 @@ public class BtreeBlockFinderTest extends TestCase {
      */ public void testBtreeSerachIsWorkingAndGivingPorperLeafNodeWithNoDictionary1() {
         BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getFileMetadataListWithOnlyNoDictionaryKey();
-        IndexesBuilderInfo infos = new IndexesBuilderInfo();
+        BTreeBuilderInfo infos = new BTreeBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
         DataRefNode dataBlock = builder.get();
@@ -70,7 +70,7 @@ public class BtreeBlockFinderTest extends TestCase {
      */ public void testBtreeSerachIsWorkingAndGivingPorperLeafNodeWithNoDictionary() {
         BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getFileMetadataListWithOnlyNoDictionaryKey();
-        IndexesBuilderInfo infos = new IndexesBuilderInfo();
+        BTreeBuilderInfo infos = new BTreeBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
         DataRefNode dataBlock = builder.get();
@@ -97,7 +97,7 @@ public class BtreeBlockFinderTest extends TestCase {
             throws KeyGenException {
         BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getFileMetadataListWithOnlyDictionaryKey();
-        IndexesBuilderInfo infos = new IndexesBuilderInfo();
+        BTreeBuilderInfo infos = new BTreeBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
         DataRefNode dataBlock = builder.get();
@@ -125,7 +125,7 @@ public class BtreeBlockFinderTest extends TestCase {
             throws KeyGenException {
         BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getFileMetadataListWithOnlyDictionaryKey();
-        IndexesBuilderInfo infos = new IndexesBuilderInfo();
+        BTreeBuilderInfo infos = new BTreeBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
         DataRefNode dataBlock = builder.get();
@@ -153,7 +153,7 @@ public class BtreeBlockFinderTest extends TestCase {
             throws KeyGenException {
         BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getFileMetadataListWithOnlyDictionaryKey();
-        IndexesBuilderInfo infos = new IndexesBuilderInfo();
+        BTreeBuilderInfo infos = new BTreeBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
         DataRefNode dataBlock = builder.get();

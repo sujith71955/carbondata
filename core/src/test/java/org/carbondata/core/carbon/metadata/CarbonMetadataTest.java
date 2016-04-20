@@ -20,8 +20,10 @@ package org.carbondata.core.carbon.metadata;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import junit.framework.TestCase;
+
 import org.carbondata.core.carbon.metadata.datatype.DataType;
 import org.carbondata.core.carbon.metadata.encoder.Encoding;
 import org.carbondata.core.carbon.metadata.schema.table.TableInfo;
@@ -31,8 +33,6 @@ import org.carbondata.core.constants.CarbonCommonConstants;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.*;
 
 public class CarbonMetadataTest extends TestCase {
 
@@ -113,7 +113,7 @@ public class CarbonMetadataTest extends TestCase {
         List<Encoding> encodeList =
                 new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
-        dimColumn.setEncodintList(encodeList);
+        dimColumn.setEncodingList(encodeList);
         dimColumn.setNumberOfChild(0);
         return dimColumn;
     }

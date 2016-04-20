@@ -449,7 +449,7 @@ public class ThriftWrapperSchemaConverterImpl implements SchemaConverter {
     for (org.carbondata.format.Encoding encoder : externalColumnSchema.getEncoders()) {
       encoders.add(fromExternalToWrapperEncoding(encoder));
     }
-    wrapperColumnSchema.setEncodintList(encoders);
+    wrapperColumnSchema.setEncodingList(encoders);
     wrapperColumnSchema.setConvertedType(fromExternalToWrapperConvertedType(externalColumnSchema.getConverted_type()));
     wrapperColumnSchema.setNumberOfChild(externalColumnSchema.getNum_child());
     wrapperColumnSchema.setPrecision(externalColumnSchema.getPrecision());
