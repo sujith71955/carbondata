@@ -18,19 +18,13 @@
  */
 package org.carbondata.core.carbon.datastore.block;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.carbondata.common.logging.LogService;
-import org.carbondata.common.logging.LogServiceFactory;
-import org.carbondata.core.carbon.datastore.BlocksBuilder;
-import org.carbondata.core.carbon.datastore.BlocksBuilderInfos;
-import org.carbondata.core.carbon.datastore.DataBlock;
-import org.carbondata.core.carbon.datastore.impl.btree.DriverBtreeFormatBuilder;
+import org.carbondata.core.carbon.datastore.DataRefNode;
+import org.carbondata.core.carbon.datastore.BtreeBuilder;
+import org.carbondata.core.carbon.datastore.IndexesBuilderInfo;
+import org.carbondata.core.carbon.datastore.impl.btree.BlockBtreeBuilder;
 import org.carbondata.core.carbon.metadata.leafnode.DataFileMetadata;
-import org.carbondata.core.util.CarbonCoreLogEvent;
-import org.carbondata.query.util.DataFileMetadataConverter;
 
 /**
  * Class which is responsible for loading the b+ tree block. This class will
@@ -38,8 +32,6 @@ import org.carbondata.query.util.DataFileMetadataConverter;
  */
 public class TableSegment {
 
-    private static final LogService LOGGER =
-            LogServiceFactory.getLogService(TableBlock.class.getName());
     /**
      * vo class which will hold the RS information of the block
      */
@@ -48,44 +40,27 @@ public class TableSegment {
     /**
      * to store the segment meta data in some data structure
      */
-    private DataBlock dataBlock;
+    private DataRefNode dataRefBlock;
 
     /**
      * Below method is store the blocks in some data structure
      *
      * @param blockInfo block detail
      */
-    public void loadCarbonTableBlock(List<TableBlockInfos> blockInfoList) {
-
-        DataFileMetadataConverter converter = new DataFileMetadataConverter();
-        // get the data file metadata from thrift
-        List<DataFileMetadata> dataMetadataList =
-                new ArrayList<DataFileMetadata>(blockInfoList.size());
-        DataFileMetadata dataFileMetadata = null;
-        try {
-            for (TableBlockInfos blockInfo : blockInfoList) {
-                dataFileMetadata = converter
-                        .readDataFileMetadata(blockInfo.getFilePath(), blockInfo.getBlockOffset());
-                dataMetadataList.add(dataFileMetadata);
-            }
-        } catch (IOException e) {
-            LOGGER.error(CarbonCoreLogEvent.UNIBI_CARBONCORE_MSG,
-                    e + "Unable to read the block metadata from file");
-            return;
-        }
+    public void loadSegmentBlock(List<DataFileMetadata> datFileMetadataList, String filePath) {
         // create a metadata details
         // this will be useful in query handling
         // all the data file metadata will have common segment properties we
         // can use first one to get create the segment properties
-        segmentProperties = new SegmentProperties(dataMetadataList.get(0).getColumnInTable(),
-                dataMetadataList.get(0).getSegmentInfo().getColumnCardinality());
+        segmentProperties = new SegmentProperties(datFileMetadataList.get(0).getColumnInTable(),
+        		datFileMetadataList.get(0).getSegmentInfo().getColumnCardinality());
         // create a segment builder info
-        BlocksBuilderInfos segmentBuilderInfos = new BlocksBuilderInfos();
-        segmentBuilderInfos.setDataFileMetadataList(dataMetadataList);
-        BlocksBuilder blocksBuilder = new DriverBtreeFormatBuilder();
+        IndexesBuilderInfo segmentBuilderInfos = new IndexesBuilderInfo();
+        segmentBuilderInfos.setDataFileMetadataList(datFileMetadataList);
+        BtreeBuilder blocksBuilder = new BlockBtreeBuilder();
         // load the metadata
         blocksBuilder.build(segmentBuilderInfos);
-        dataBlock = blocksBuilder.get();
+        dataRefBlock = blocksBuilder.get();
     }
 
     /**
@@ -98,8 +73,8 @@ public class TableSegment {
     /**
      * @return the dataBlock
      */
-    public DataBlock getDataBlock() {
-        return dataBlock;
+    public DataRefNode getDataBlock() {
+        return dataRefBlock;
     }
 
 }

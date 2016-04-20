@@ -21,7 +21,7 @@ package org.carbondata.core.carbon.datastore.impl.btree;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.carbondata.core.carbon.datastore.DataBlock;
+import org.carbondata.core.carbon.datastore.DataRefNode;
 import org.carbondata.core.carbon.datastore.IndexKey;
 import org.carbondata.core.carbon.datastore.chunk.DimensionColumnDataChunk;
 import org.carbondata.core.carbon.datastore.chunk.MeasureColumnDataChunk;
@@ -56,15 +56,6 @@ public class BTreeNonLeafNode implements BTreeNode {
      */
     @Override public IndexKey[] getNodeKeys() {
         return listOfKeys.toArray(new IndexKey[listOfKeys.size()]);
-    }
-
-    /**
-     * number of keys in the blocks
-     *
-     * @return number of keys in a non leaf node
-     */
-    @Override public int blockSize() {
-        return listOfKeys.size();
     }
 
     /**
@@ -104,12 +95,40 @@ public class BTreeNonLeafNode implements BTreeNode {
     }
 
     /**
+     * @return whether its a leaf node or not
+     */
+    @Override public boolean isLeafNode() {
+        return false;
+    }
+
+    /**
+     * Method to get the next block this can be used while scanning when
+     * iterator of this class can be used iterate over blocks
+     *
+     * @return next block
+     */
+    @Override public DataRefNode getNextDataRefNode() {
+        throw new UnsupportedOperationException("Unsupported operation");
+    }
+
+    /**
+     * to get the number of keys tuples present in the block
+     *
+     * @return number of keys in the block
+     */
+    @Override public int nodeSize() {
+        return listOfKeys.size();
+    }
+
+    /**
+     * Method can be used to get the block index .This can be used when multiple
+     * thread can be used scan group of blocks in that can we can assign the
+     * some of the blocks to one thread and some to other
+     *
      * @return block number
      */
-    @Override public long getBlockNumber() {
-        // no required in case of btree
-        // non leaf node
-        return 0;
+    @Override public long nodeNumber() {
+        throw new UnsupportedOperationException("Unsupported operation");
     }
 
     /**
@@ -119,21 +138,27 @@ public class BTreeNonLeafNode implements BTreeNode {
      * @param max value of all the columns
      */
     @Override public byte[][] getColumnsMaxValue() {
-        // no required in case of btree
-        // non leaf node
-        return null;
+        // operation of getting the max value is not supported as its a non leaf
+        // node
+        // and in case of B+Tree data will be stored only in leaf node and
+        // intermediate
+        // node will be used only for searching the leaf node
+        throw new UnsupportedOperationException("Unsupported operation");
     }
 
     /**
      * This method will be used to get the max value of all the columns this can
      * be used in case of filter query
      *
-     * @param max value of all the columns
+     * @param min value of all the columns
      */
     @Override public byte[][] getColumnsMinValue() {
-        // no required in case of btree
-        //	non leaf node
-        return null;
+        // operation of getting the min value is not supported as its a non leaf
+        // node
+        // and in case of B+Tree data will be stored only in leaf node and
+        // intermediate
+        // node will be used only for searching the leaf node
+        throw new UnsupportedOperationException("Unsupported operation");
     }
 
     /**
@@ -145,9 +170,13 @@ public class BTreeNonLeafNode implements BTreeNode {
      */
     @Override public DimensionColumnDataChunk[] getDimensionChunks(FileHolder fileReader,
             int[] blockIndexes) {
-        // no required in case of btree
-        //	non leaf node
-        return null;
+
+        // operation of getting the dimension chunks is not supported as its a
+        // non leaf node
+        // and in case of B+Tree data will be stored only in leaf node and
+        // intermediate
+        // node will be used only for searching the leaf node
+        throw new UnsupportedOperationException("Unsupported operation");
     }
 
     /**
@@ -159,9 +188,12 @@ public class BTreeNonLeafNode implements BTreeNode {
      */
     @Override public DimensionColumnDataChunk getDimensionChunk(FileHolder fileReader,
             int blockIndexes) {
-        // no required in case of btree
-        //	non leaf node
-        return null;
+        // operation of getting the dimension chunk is not supported as its a
+        // non leaf node
+        // and in case of B+Tree data will be stored only in leaf node and
+        // intermediate
+        // node will be used only for searching the leaf node
+        throw new UnsupportedOperationException("Unsupported operation");
     }
 
     /**
@@ -173,9 +205,12 @@ public class BTreeNonLeafNode implements BTreeNode {
      */
     @Override public MeasureColumnDataChunk[] getMeasureChunks(FileHolder fileReader,
             int[] blockIndexes) {
-        // // no required in case of btree
-        //	non leaf node
-        return null;
+        // operation of getting the measure chunk is not supported as its a non
+        // leaf node
+        // and in case of B+Tree data will be stored only in leaf node and
+        // intermediate
+        // node will be used only for searching the leaf node
+        throw new UnsupportedOperationException("Unsupported operation");
     }
 
     /**
@@ -185,25 +220,13 @@ public class BTreeNonLeafNode implements BTreeNode {
      * @param blockIndex block index to be read from file
      * @return measure data chunk
      */
+
     @Override public MeasureColumnDataChunk getMeasureChunk(FileHolder fileReader, int blockIndex) {
-        // // no required in case of btree
-        //	non leaf node
-        return null;
-    }
-
-    /**
-     * @return whether its a leaf node or not
-     */
-    @Override public boolean isLeafNode() {
-        return false;
-    }
-
-    /**
-     * to get the next block of the node
-     */
-    @Override public DataBlock getNextBlock() {
-        // return next of the block
-        // not required in no leaf node
-        return null;
+        // operation of getting the measure chunk is not supported as its a non
+        // leaf node
+        // and in case of B+Tree data will be stored only in leaf node and
+        // intermediate
+        // node will be used only for searching the leaf node
+        throw new UnsupportedOperationException("Unsupported operation");
     }
 }

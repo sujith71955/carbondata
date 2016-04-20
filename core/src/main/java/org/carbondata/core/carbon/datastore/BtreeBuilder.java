@@ -19,20 +19,21 @@
 package org.carbondata.core.carbon.datastore;
 
 /**
- * Below class to store blocks in some data structure
+ * Below interface will be used to build the index
+ * in some data structure
  */
-public interface BlocksBuilder {
+public interface BtreeBuilder {
 
     /**
      * Below method will be used to store the leaf collection in some data structure
      */
-    void build(BlocksBuilderInfos blocksBuilderInfos);
+    void build(IndexesBuilderInfo blocksBuilderInfos);
 
     /**
      * below method to get the first data block
      *
      * @return data block
      */
-    DataBlock get();
+    DataRefNode get();
 
 }

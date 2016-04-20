@@ -20,16 +20,13 @@ package org.carbondata.core.carbon.datastore.block;
 
 import java.io.Serializable;
 
-import org.carbondata.core.carbon.datastore.CarbonTableSegmentStore;
-import org.carbondata.core.carbon.path.CarbonTablePath;
 import org.carbondata.core.carbon.path.CarbonTablePath.DataFileUtil;
-import org.carbondata.core.constants.CarbonCommonConstants;
 
 /**
  * class will be used to pass the block detail detail will be passed form driver
  * to all the executor to load the b+ tree
  */
-public class TableBlockInfos implements Serializable, Comparable<TableBlockInfos> {
+public class TableBlockInfo implements Serializable, Comparable<TableBlockInfo> {
 
     /**
      * serialization id
@@ -47,24 +44,9 @@ public class TableBlockInfos implements Serializable, Comparable<TableBlockInfos
     private long blockOffset;
 
     /**
-     * name of the table to be loaded
-     */
-    private String tableName;
-
-    /**
      * id of the segment this will be used to sort the blocks
      */
     private int segmentId;
-
-    /**
-     * start key of the query
-     */
-    private byte[] startKey;
-
-    /**
-     * end key of the query
-     */
-    private byte[] endKey;
 
     /**
      * @return the filePath
@@ -92,20 +74,6 @@ public class TableBlockInfos implements Serializable, Comparable<TableBlockInfos
      */
     public void setBlockOffset(long blockOffset) {
         this.blockOffset = blockOffset;
-    }
-
-    /**
-     * @return the tableName
-     */
-    public String getTableName() {
-        return tableName;
-    }
-
-    /**
-     * @param tableName the tableName to set
-     */
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
     }
 
     /**
@@ -140,10 +108,10 @@ public class TableBlockInfos implements Serializable, Comparable<TableBlockInfos
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof TableBlockInfos)) {
+        if (!(obj instanceof TableBlockInfo)) {
             return false;
         }
-        TableBlockInfos other = (TableBlockInfos) obj;
+        TableBlockInfo other = (TableBlockInfo) obj;
         if (blockOffset != other.blockOffset) {
             return false;
         }
@@ -163,55 +131,37 @@ public class TableBlockInfos implements Serializable, Comparable<TableBlockInfos
      * Comparison logic is:
      * 1. compare segment id
      * if segment id is same
-     * 2. compare file name id
-     * if file name id is same
+     * 2. compare task id
+     * if task id is same
      * 3. compare offsets of the block
      */
-    @Override public int compareTo(TableBlockInfos other) {
+	@Override
+	public int compareTo(TableBlockInfo other) {
 
-        int compareResult = 0;
-        // get the segment id
-        compareResult = segmentId - other.segmentId;
-        if (compareResult != 0) {
-            return compareResult;
-        }
-        //@TODO need to compare the file number first than 
-        // offset, no sure about the current structure of the 
-        //file name  
-        if (blockOffset < other.blockOffset) {
-            return 1;
-        } else if (blockOffset > other.blockOffset) {
-            return -1;
-        }
-        return 0;
-    }
-
-    /**
-     * @return the startKey
-     */
-    public byte[] getStartKey() {
-        return startKey;
-    }
-
-    /**
-     * @param startKey the startKey to set
-     */
-    public void setStartKey(byte[] startKey) {
-        this.startKey = startKey;
-    }
-
-    /**
-     * @return the endKey
-     */
-    public byte[] getEndKey() {
-        return endKey;
-    }
-
-    /**
-     * @param endKey the endKey to set
-     */
-    public void setEndKey(byte[] endKey) {
-        this.endKey = endKey;
-    }
-
+		int compareResult = 0;
+		// get the segment id
+		compareResult = segmentId - other.segmentId;
+		if (compareResult != 0) {
+			return compareResult;
+		}
+		// Comparing the time task id of the file to other
+		// if both the task id of the file is same then we need to compare the
+		// offset of
+		// the file
+		long firstTaskNo = Long.parseLong(DataFileUtil.getTaskNo(filePath));
+		long otherTaskNo = Long.parseLong(DataFileUtil.getTaskNo(filePath));
+		if (firstTaskNo < otherTaskNo) {
+			return 1;
+		} else if (firstTaskNo > otherTaskNo) {
+			return -1;
+		}
+		// offset, no sure about the current structure of the
+		// file name
+		if (blockOffset < other.blockOffset) {
+			return 1;
+		} else if (blockOffset > other.blockOffset) {
+			return -1;
+		}
+		return 0;
+	}
 }

@@ -17,36 +17,55 @@
  * under the License.
  */
 package org.carbondata.core.carbon.datastore.impl.btree;
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.carbondata.common.logging.LogService;
 import org.carbondata.common.logging.LogServiceFactory;
-import org.carbondata.core.carbon.datastore.BlocksBuilderInfos;
 import org.carbondata.core.carbon.datastore.IndexKey;
+import org.carbondata.core.carbon.datastore.IndexesBuilderInfo;
 import org.carbondata.core.constants.CarbonCommonConstants;
 import org.carbondata.query.util.CarbonEngineLogEvent;
 
 /**
- * Btree based builder which will build the leaf node in a b+ tree format
+ * Below class will be used to build the btree BTree will be built for all the
+ * blocks of a segment
  */
-public class BlockBtreeFormatBuilder extends AbstractBtreeFormatBuilder {
+public class BlockBtreeBuilder extends AbstractBtreeBuilder {
 
     /**
      * Attribute for Carbon LOGGER
      */
     private static final LogService LOGGER =
-            LogServiceFactory.getLogService(BlockBtreeFormatBuilder.class.getName());
+            LogServiceFactory.getLogService(BlockBtreeBuilder.class.getName());
 
     /**
      * Below method will be used to build the segment info bplus tree format
-     * Tree will be a read only tree, and it will be build on Bottoms up approach
-     * first all the leaf node will be built and then intermediate node
-     * in our case one leaf node will have not only one entry it will have group of entries
+     * Tree will be a read only tree, and it will be build on Bottoms up
+     * approach first all the leaf node will be built and then intermediate node
+     * in our case one leaf node will have not only one entry it will have group
+     * of entries
      */
-    @Override public void build(BlocksBuilderInfos segmentBuilderInfos) {
-        long totalNumberOfTuple = 0;
+    @Override public void build(IndexesBuilderInfo segmentBuilderInfos) {
         int groupCounter;
         int nInternal = 0;
         BTreeNode curNode = null;
@@ -58,14 +77,10 @@ public class BlockBtreeFormatBuilder extends AbstractBtreeFormatBuilder {
                 new ArrayList<List<IndexKey>>(CarbonCommonConstants.CONSTANT_SIZE_TEN);
         List<IndexKey> leafNSKeyList = null;
         long nodeNumber = 0;
-        for (int index = 0;
-             index < segmentBuilderInfos.getDataFileMetadataList().get(0).getLeafNodeList()
-                     .size(); index++) {
+        for (int metadataIndex = 0; metadataIndex < segmentBuilderInfos.getDataFileMetadataList()
+                .size(); metadataIndex++) {
             // creating a leaf node
-            curNode = new BlockBTreeLeafNode(segmentBuilderInfos, index, nodeNumber++);
-            totalNumberOfTuple +=
-                    segmentBuilderInfos.getDataFileMetadataList().get(0).getLeafNodeList()
-                            .get(index).getNumberOfRows();
+            curNode = new BlockBtreeLeafNode(segmentBuilderInfos, metadataIndex, nodeNumber++);
             nLeaf++;
             // setting a next node as its a b+tree
             // so all the leaf node will be chained
@@ -87,14 +102,14 @@ public class BlockBtreeFormatBuilder extends AbstractBtreeFormatBuilder {
             }
             if (null != leafNSKeyList) {
                 leafNSKeyList.add(convertStartKeyToNodeEntry(
-                        segmentBuilderInfos.getDataFileMetadataList().get(0).getLeafNodeList()
-                                .get(index).getLeafNodeIndex().getBtreeIndex().getStartKey()));
+                        segmentBuilderInfos.getDataFileMetadataList().get(metadataIndex)
+                                .getLeafNodeIndex().getBtreeIndex().getStartKey()));
             }
             if (null != currentGroup) {
                 currentGroup[groupCounter] = curNode;
             }
         }
-        if (totalNumberOfTuple == 0) {
+        if (nLeaf == 0) {
             curNode = new BTreeNonLeafNode();
             return;
         }
@@ -102,7 +117,6 @@ public class BlockBtreeFormatBuilder extends AbstractBtreeFormatBuilder {
         addIntermediateNode(curNode, nodeGroups, currentGroup, interNSKeyList, nInternal);
         LOGGER.info(CarbonEngineLogEvent.UNIBI_CARBONENGINE_MSG,
                 "**********************************************"
-                        + "***********Total Number Rows In BTREE: " + totalNumberOfTuple);
+                        + "***********Total Number Rows In BTREE: " + nLeaf);
     }
-
 }

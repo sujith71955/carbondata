@@ -37,7 +37,7 @@ public class DimensionChunkAttributes {
     /**
      * each row size
      */
-    private int eachValueSize;
+    private int columnValueSize;
 
     /**
      * is no dictionary
@@ -75,15 +75,15 @@ public class DimensionChunkAttributes {
     /**
      * @return the eachRowSize
      */
-    public int getEachValueSize() {
-        return eachValueSize;
+    public int getColumnValueSize() {
+        return columnValueSize;
     }
 
     /**
      * @param eachRowSize the eachRowSize to set
      */
     public void setEachRowSize(int eachRowSize) {
-        this.eachValueSize = eachRowSize;
+        this.columnValueSize = eachRowSize;
     }
 
     /**

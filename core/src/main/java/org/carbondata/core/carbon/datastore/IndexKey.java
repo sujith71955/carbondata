@@ -30,7 +30,9 @@ public class IndexKey {
     private byte[] dictionaryKeys;
 
     /**
-     * dictionary which was no generated using key generator
+     * key which was no generated using key generator
+     * <Index of FirstKey (2 bytes)><Index of SecondKey (2 bytes)><Index of NKey (2 bytes)>
+     * <First Key ByteArray><2nd Key ByteArray><N Key ByteArray>
      */
     private byte[] noDictionaryKeys;
 

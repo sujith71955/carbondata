@@ -18,7 +18,7 @@
  */
 package org.carbondata.core.carbon.datastore.impl.btree;
 
-import org.carbondata.core.carbon.datastore.DataBlock;
+import org.carbondata.core.carbon.datastore.DataRefNode;
 import org.carbondata.core.carbon.datastore.IndexKey;
 import org.carbondata.core.carbon.datastore.chunk.DimensionColumnDataChunk;
 import org.carbondata.core.carbon.datastore.chunk.MeasureColumnDataChunk;
@@ -62,7 +62,7 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      *
      * @return next block
      */
-    @Override public int blockSize() {
+    @Override public int nodeSize() {
         return this.numberOfKeys;
     }
 
@@ -82,8 +82,7 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      * @return btree node
      */
     @Override public BTreeNode getChild(int index) {
-        // not required in case of btree
-        return null;
+        throw new UnsupportedOperationException("Operation not supported in case of leaf node");
     }
 
     /**
@@ -92,7 +91,7 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      * @param key node entry
      */
     @Override public void setKey(IndexKey key) {
-        // not required in case of leaf node
+        throw new UnsupportedOperationException("Operation not supported in case of leaf node");
     }
 
     /**
@@ -102,7 +101,7 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      *
      * @return block number
      */
-    @Override public long getBlockNumber() {
+    @Override public long nodeNumber() {
         return nodeNumber;
     }
 
@@ -141,7 +140,7 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      *
      * @return next block
      */
-    @Override public DataBlock getNextBlock() {
+    @Override public DataRefNode getNextDataRefNode() {
         return nextNode;
     }
 
@@ -152,7 +151,7 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      */
     @Override public IndexKey[] getNodeKeys() {
         // as this is a leaf node so this method implementation is not required
-        return null;
+        throw new UnsupportedOperationException("Operation not supported in case of leaf node");
     }
 
     /**
@@ -161,7 +160,8 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      * @param children array
      */
     @Override public void setChildren(BTreeNode[] children) {
-        // no required in case of leaf node
+        // no required in case of leaf node as leaf node will not have any children 
+        throw new UnsupportedOperationException("Operation not supported in case of leaf node");
     }
 
     /**
@@ -173,7 +173,7 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      */
     @Override public DimensionColumnDataChunk[] getDimensionChunks(FileHolder fileReader,
             int[] blockIndexes) {
-        // No required here
+        // No required here as leaf which will will be use this class will implement its own get dimension chunks
         return null;
     }
 
@@ -186,7 +186,7 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      */
     @Override public DimensionColumnDataChunk getDimensionChunk(FileHolder fileReader,
             int blockIndex) {
-        // No required here
+        // No required here as leaf which will will be use this class will implement its own get dimension chunks
         return null;
     }
 
@@ -199,7 +199,7 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      */
     @Override public MeasureColumnDataChunk[] getMeasureChunks(FileHolder fileReader,
             int[] blockIndexes) {
-        // No required here
+        // No required here as leaf which will will be use this class will implement its own get measure chunks
         return null;
     }
 
@@ -211,7 +211,7 @@ public abstract class AbstractBtreeLeafNode implements BTreeNode {
      * @return measure data chunk
      */
     @Override public MeasureColumnDataChunk getMeasureChunk(FileHolder fileReader, int blockIndex) {
-        // No required here
+        // No required here as leaf which will will be use this class will implement its own get measure chunks
         return null;
     }
 }

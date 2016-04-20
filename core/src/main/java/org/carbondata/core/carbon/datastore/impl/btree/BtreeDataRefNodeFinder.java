@@ -18,16 +18,28 @@
  */
 package org.carbondata.core.carbon.datastore.impl.btree;
 
-import org.carbondata.core.carbon.datastore.DataBlock;
-import org.carbondata.core.carbon.datastore.DataBlockFinder;
+import java.nio.ByteBuffer;
+
+import org.carbondata.core.carbon.datastore.DataRefNodeFinder;
+import org.carbondata.core.carbon.datastore.DataRefNode;
 import org.carbondata.core.carbon.datastore.IndexKey;
 import org.carbondata.core.util.ByteUtil;
 
 /**
  * Below class will be used to find a block in a btree
  */
-public class BTreeBasedBlockFinder implements DataBlockFinder {
+public class BtreeDataRefNodeFinder implements DataRefNodeFinder {
 
+    /**
+     * no dictionary column value is of variable length so in each column value
+     * it will -1
+     */
+    private static final int NO_DCITIONARY_COLUMN_VALUE = -1;
+
+    /**
+     * sized of the short value in bytes
+     */
+    private static final short SHORT_SIZE_IN_BYTES = 2;
     /**
      * this will holds the information about the size of each value of a column,
      * this will be used during Comparison of the btree node value and the
@@ -43,7 +55,7 @@ public class BTreeBasedBlockFinder implements DataBlockFinder {
      */
     private int numberOfNoDictionaryColumns;
 
-    public BTreeBasedBlockFinder(int[] eachColumnValueSize) {
+    public BtreeDataRefNodeFinder(int[] eachColumnValueSize) {
         this.eachColumnValueSize = eachColumnValueSize;
 
         for (int i = 0; i < eachColumnValueSize.length; i++) {
@@ -54,33 +66,35 @@ public class BTreeBasedBlockFinder implements DataBlockFinder {
     }
 
     /**
-     * Below method will be used to get the data block based on search key
+     * Below method will be used to get the first tentative data block based on
+     * search key
      *
      * @param dataBlocks complete data blocks present
      * @param serachKey  key to be search
-     * @param isFirst    in block we can have duplicate data if data is sorted then for
-     *                   scanning we need to scan first instance of the search key till
-     *                   last so for this is user is passing is first true it will
-     *                   return the first instance if false then it will return the
-     *                   last. In case of unsorted data this parameter does not matter
-     *                   implementation is will handle that scenario
      * @return data block
      */
-    @Override public DataBlock findDataBlock(DataBlock builder, IndexKey serachKey,
-            boolean isFirst) {
+    @Override public DataRefNode findFirstDataBlock(DataRefNode dataRefBlock, IndexKey serachKey) {
+        // as its for btree type cast it to btree interface
+        BTreeNode rootNode = (BTreeNode) dataRefBlock;
+        while (!rootNode.isLeafNode()) {
+            rootNode = findFirstLeafNode(serachKey, rootNode);
+        }
+        return rootNode;
+    }
 
-        // as its for btree type case it to btree interface
-        BTreeNode rootNode = (BTreeNode) builder;
-        // if first is true then get the first tentative block with this key
-        // othewise get the last tentative block
-        if (isFirst) {
-            while (!rootNode.isLeafNode()) {
-                rootNode = findFirstLeafNode(serachKey, rootNode);
-            }
-        } else {
-            while (!rootNode.isLeafNode()) {
-                rootNode = findLastLeafNode(serachKey, rootNode);
-            }
+    /**
+     * Below method will be used to get the last data tentative block based on
+     * search key
+     *
+     * @param dataBlocks complete data blocks present
+     * @param serachKey  key to be search
+     * @return data block
+     */
+    @Override public DataRefNode findLastDataBlock(DataRefNode dataRefBlock, IndexKey serachKey) {
+        // as its for btree type cast it to btree interface
+        BTreeNode rootNode = (BTreeNode) dataRefBlock;
+        while (!rootNode.isLeafNode()) {
+            rootNode = findLastLeafNode(serachKey, rootNode);
         }
         return rootNode;
     }
@@ -96,7 +110,7 @@ public class BTreeBasedBlockFinder implements DataBlockFinder {
     private BTreeNode findFirstLeafNode(IndexKey key, BTreeNode node) {
         int childNodeIndex;
         int low = 0;
-        int high = node.blockSize() - 1;
+        int high = node.nodeSize() - 1;
         int mid = 0;
         int compareRes = -1;
         IndexKey[] nodeKeys = node.getNodeKeys();
@@ -146,7 +160,7 @@ public class BTreeBasedBlockFinder implements DataBlockFinder {
     private BTreeNode findLastLeafNode(IndexKey key, BTreeNode node) {
         int childNodeIndex;
         int low = 0;
-        int high = node.blockSize() - 1;
+        int high = node.nodeSize() - 1;
         int mid = 0;
         int compareRes = -1;
         IndexKey[] nodeKeys = node.getNodeKeys();
@@ -162,7 +176,7 @@ public class BTreeBasedBlockFinder implements DataBlockFinder {
             } else {
                 int currentPos = mid;
                 // if key is matched then get the first entry
-                while (currentPos + 1 < node.blockSize()
+                while (currentPos + 1 < node.nodeSize()
                         && compareIndexes(key, nodeKeys[currentPos + 1]) == 0) {
                     currentPos++;
                 }
@@ -186,67 +200,68 @@ public class BTreeBasedBlockFinder implements DataBlockFinder {
     }
 
     /**
-     * Below method is to compare two indexes
+     * Comparison of index key will be following format of key <Dictionary> key
+     * will be in byte array No dictionary key Index of FirstKey (2
+     * bytes)><Index of SecondKey (2 bytes)><Index of NKey (2 bytes)> <First Key
+     * ByteArray><2nd Key ByteArray><N Key ByteArray> in each column value size
+     * of no dictionary column will be -1 if in each column value is not -1 then
+     * compare the byte array based on size and increment the offset to
+     * dictionary column size if size is -1 then its a no dictionary key so to
+     * get the length subtract the size of current with next key offset it will
+     * give the actual length if it is at last position or only one key is
+     * present then subtract with length
      *
-     * @param first  first index
-     * @param second second index
-     * @return return the compare result
+     * @param first  key
+     * @param second key
+     * @return comparison value
      */
     private int compareIndexes(IndexKey first, IndexKey second) {
         int dictionaryKeyOffset = 0;
         int nonDictionaryKeyOffset = 0;
         int compareResult = 0;
         int processedNoDictionaryColumn = numberOfNoDictionaryColumns;
-        // no dictionary column are store in below format
-        // <index,index,index,data,data,data>
-        // for example for values are present then
-        // [4,8,10,11,1,1,1,1,2,2,3,4] where first for values
-        // represent the index of the key and then actual data
-        // to compare the no dictionary we need the length of actual data
-        // for that if substract the index of the next column value to the
-        // current then
-        // we can get the number of key to be compared for that column
-        // but now for last key there wont be any next column, so for that we
-        // need to handle
-        // Separately in that case we can substract with the actual length to
-        // get the length of the last key
-        for (int i = 0; i < eachColumnValueSize.length; i++) {
-            if (eachColumnValueSize[i] == -1) {
-                if (processedNoDictionaryColumn > 1) {
-                    compareResult = ByteUtil.UnsafeComparer.INSTANCE
-                            .compareTo(first.getNoDictionaryKeys(),
-                                    first.getNoDictionaryKeys()[nonDictionaryKeyOffset],
-                                    first.getNoDictionaryKeys()[nonDictionaryKeyOffset + 1] - first
-                                            .getNoDictionaryKeys()[nonDictionaryKeyOffset],
-                                    second.getNoDictionaryKeys(),
-                                    second.getNoDictionaryKeys()[nonDictionaryKeyOffset],
-                                    second.getNoDictionaryKeys()[nonDictionaryKeyOffset + 1]
-                                            - second.getNoDictionaryKeys()[nonDictionaryKeyOffset]);
-                } else {
-                    compareResult = ByteUtil.UnsafeComparer.INSTANCE
-                            .compareTo(first.getNoDictionaryKeys(),
-                                    first.getNoDictionaryKeys()[nonDictionaryKeyOffset],
-                                    first.getNoDictionaryKeys().length - first
-                                            .getNoDictionaryKeys()[nonDictionaryKeyOffset],
-                                    second.getNoDictionaryKeys(),
-                                    second.getNoDictionaryKeys()[nonDictionaryKeyOffset],
-                                    second.getNoDictionaryKeys().length - second
-                                            .getNoDictionaryKeys()[nonDictionaryKeyOffset]);
+        ByteBuffer firstNoDictionaryKeyBuffer = ByteBuffer.wrap(first.getNoDictionaryKeys());
+        ByteBuffer secondNoDictionaryKeyBuffer = ByteBuffer.wrap(second.getNoDictionaryKeys());
+        int actualOffset = 0;
+        int firstNoDcitionaryLength = 0;
+        int secondNodeDictionaryLength = 0;
 
-                }
-                --processedNoDictionaryColumn;
-                ++nonDictionaryKeyOffset;
-            } else {
+        for (int i = 0; i < eachColumnValueSize.length; i++) {
+
+            if (eachColumnValueSize[i] != NO_DCITIONARY_COLUMN_VALUE) {
                 compareResult = ByteUtil.UnsafeComparer.INSTANCE
                         .compareTo(first.getDictionaryKeys(), dictionaryKeyOffset,
                                 eachColumnValueSize[i], second.getDictionaryKeys(),
                                 dictionaryKeyOffset, eachColumnValueSize[i]);
+                dictionaryKeyOffset += eachColumnValueSize[i];
+            } else {
+                if (processedNoDictionaryColumn > 1) {
+                    actualOffset = firstNoDictionaryKeyBuffer.getShort(nonDictionaryKeyOffset);
+                    firstNoDcitionaryLength = firstNoDictionaryKeyBuffer
+                            .getShort(nonDictionaryKeyOffset + SHORT_SIZE_IN_BYTES);
+                    secondNodeDictionaryLength = secondNoDictionaryKeyBuffer
+                            .getShort(nonDictionaryKeyOffset + SHORT_SIZE_IN_BYTES);
+                    compareResult = ByteUtil.UnsafeComparer.INSTANCE
+                            .compareTo(first.getNoDictionaryKeys(), actualOffset,
+                                    firstNoDcitionaryLength, second.getNoDictionaryKeys(),
+                                    actualOffset, secondNodeDictionaryLength);
+                    nonDictionaryKeyOffset += SHORT_SIZE_IN_BYTES;
+                    processedNoDictionaryColumn--;
+                } else {
+                    actualOffset = firstNoDictionaryKeyBuffer.getShort(nonDictionaryKeyOffset);
+                    firstNoDcitionaryLength = first.getNoDictionaryKeys().length - actualOffset;
+                    secondNodeDictionaryLength = second.getNoDictionaryKeys().length - actualOffset;
+                    compareResult = ByteUtil.UnsafeComparer.INSTANCE
+                            .compareTo(first.getNoDictionaryKeys(), actualOffset,
+                                    firstNoDcitionaryLength, second.getNoDictionaryKeys(),
+                                    actualOffset, secondNodeDictionaryLength);
+                }
             }
             if (compareResult != 0) {
                 return compareResult;
             }
         }
-        return compareResult;
-    }
 
+        return 0;
+    }
 }

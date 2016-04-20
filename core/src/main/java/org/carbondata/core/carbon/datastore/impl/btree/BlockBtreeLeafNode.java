@@ -18,7 +18,7 @@
  */
 package org.carbondata.core.carbon.datastore.impl.btree;
 
-import org.carbondata.core.carbon.datastore.BlocksBuilderInfos;
+import org.carbondata.core.carbon.datastore.IndexesBuilderInfo;
 import org.carbondata.core.carbon.metadata.leafnode.indexes.LeafNodeMinMaxIndex;
 
 /**
@@ -26,7 +26,7 @@ import org.carbondata.core.carbon.metadata.leafnode.indexes.LeafNodeMinMaxIndex;
  * this can be used from driver when only we need to find
  * whether particular block be selected for query execution
  */
-public class DriverBtreeLeafNode extends AbstractBtreeLeafNode {
+public class BlockBtreeLeafNode extends AbstractBtreeLeafNode {
 
     /**
      * Create a leaf node
@@ -35,8 +35,7 @@ public class DriverBtreeLeafNode extends AbstractBtreeLeafNode {
      * @param leafIndex     leaf node index
      * @param metadataIndex metadata index
      */
-    public DriverBtreeLeafNode(BlocksBuilderInfos builderInfos, int metadataIndex,
-            long nodeNumber) {
+    public BlockBtreeLeafNode(IndexesBuilderInfo builderInfos, int metadataIndex, long nodeNumber) {
         LeafNodeMinMaxIndex minMaxIndex =
                 builderInfos.getDataFileMetadataList().get(metadataIndex).getLeafNodeIndex()
                         .getMinMaxIndex();

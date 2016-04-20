@@ -18,6 +18,9 @@
  */
 package org.carbondata.core.carbon.metadata;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.TestCase;
 import org.carbondata.core.carbon.metadata.datatype.DataType;
 import org.carbondata.core.carbon.metadata.encoder.Encoding;
@@ -94,8 +97,8 @@ public class CarbonMetadataTest extends TestCase {
         assertEquals(10000,
                 carbonMetadata.getCarbonTable(tableUniqueName).getTableLastUpdatedTime());
         CarbonMetadata carbonMetadata1 = CarbonMetadata.getInstance();
-        carbonMetadata1.loadTableMetadata(getTableInfo(1001));
-        assertEquals(1001,
+        carbonMetadata1.loadTableMetadata(getTableInfo(100001));
+        assertEquals(100001,
                 carbonMetadata.getCarbonTable(tableUniqueName).getTableLastUpdatedTime());
         assertEquals(1, carbonMetadata.getNumberOfTables());
     }
@@ -107,8 +110,8 @@ public class CarbonMetadataTest extends TestCase {
         dimColumn.setColumnUniqueId(UUID.randomUUID().toString());
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setNumberOfChild(0);

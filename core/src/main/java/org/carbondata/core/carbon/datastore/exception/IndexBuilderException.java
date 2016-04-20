@@ -26,7 +26,7 @@ import java.util.Locale;
  *
  * @author Administrator
  */
-public class BlockBuilderException extends Exception {
+public class IndexBuilderException extends Exception {
     /**
      * default serial version ID.
      */
@@ -43,7 +43,7 @@ public class BlockBuilderException extends Exception {
      * @param errorCode The error code for this exception.
      * @param msg       The error message for this exception.
      */
-    public BlockBuilderException(String msg) {
+    public IndexBuilderException(String msg) {
         super(msg);
         this.msg = msg;
     }
@@ -54,7 +54,7 @@ public class BlockBuilderException extends Exception {
      * @param msg       exception message
      * @param throwable detail exception
      */
-    public BlockBuilderException(String msg, Throwable throwable) {
+    public IndexBuilderException(String msg, Throwable throwable) {
         super(msg, throwable);
         this.msg = msg;
     }
@@ -64,7 +64,7 @@ public class BlockBuilderException extends Exception {
      *
      * @param throwable exception
      */
-    public BlockBuilderException(Throwable throwable) {
+    public IndexBuilderException(Throwable throwable) {
         super(throwable);
     }
 

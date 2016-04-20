@@ -17,70 +17,55 @@
  * under the License.
  */
 package org.carbondata.core.carbon.datastore.impl.btree;
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.carbondata.common.logging.LogService;
 import org.carbondata.common.logging.LogServiceFactory;
-import org.carbondata.core.carbon.datastore.BlocksBuilderInfos;
 import org.carbondata.core.carbon.datastore.IndexKey;
+import org.carbondata.core.carbon.datastore.IndexesBuilderInfo;
 import org.carbondata.core.constants.CarbonCommonConstants;
 import org.carbondata.query.util.CarbonEngineLogEvent;
 
 /**
- * Below class will be used to build the btree BTree will be built for all the
- * blocks of a segment
+ * Btree based builder which will build the leaf node in a b+ tree format
  */
-public class DriverBtreeFormatBuilder extends AbstractBtreeFormatBuilder {
+public class BlockletBtreeBuilder extends AbstractBtreeBuilder {
 
     /**
      * Attribute for Carbon LOGGER
      */
     private static final LogService LOGGER =
-            LogServiceFactory.getLogService(DriverBtreeFormatBuilder.class.getName());
+            LogServiceFactory.getLogService(BlockletBtreeBuilder.class.getName());
 
     /**
      * Below method will be used to build the segment info bplus tree format
-     * Tree will be a read only tree, and it will be build on Bottoms up
-     * approach first all the leaf node will be built and then intermediate node
-     * in our case one leaf node will have not only one entry it will have group
-     * of entries
+     * Tree will be a read only tree, and it will be build on Bottoms up approach
+     * first all the leaf node will be built and then intermediate node
+     * in our case one leaf node will have not only one entry it will have group of entries
      */
-    @Override public void build(BlocksBuilderInfos segmentBuilderInfos) {
+    @Override public void build(IndexesBuilderInfo segmentBuilderInfos) {
+        long totalNumberOfTuple = 0;
         int groupCounter;
         int nInternal = 0;
         BTreeNode curNode = null;
         BTreeNode prevNode = null;
         List<BTreeNode[]> nodeGroups =
-                new ArrayList<BTreeNode[]>(CarbonCommonConstants.CONSTANT_SIZE_TEN);
+                new ArrayList<BTreeNode[]>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         BTreeNode[] currentGroup = null;
         List<List<IndexKey>> interNSKeyList =
-                new ArrayList<List<IndexKey>>(CarbonCommonConstants.CONSTANT_SIZE_TEN);
+                new ArrayList<List<IndexKey>>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         List<IndexKey> leafNSKeyList = null;
         long nodeNumber = 0;
-        for (int metadataIndex = 0; metadataIndex < segmentBuilderInfos.getDataFileMetadataList()
-                .size(); metadataIndex++) {
+        for (int index = 0;
+             index < segmentBuilderInfos.getDataFileMetadataList().get(0).getLeafNodeList()
+                     .size(); index++) {
             // creating a leaf node
-            curNode = new DriverBtreeLeafNode(segmentBuilderInfos, metadataIndex, nodeNumber++);
+            curNode = new BlockletLeafNode(segmentBuilderInfos, index, nodeNumber++);
+            totalNumberOfTuple +=
+                    segmentBuilderInfos.getDataFileMetadataList().get(0).getLeafNodeList()
+                            .get(index).getNumberOfRows();
             nLeaf++;
             // setting a next node as its a b+tree
             // so all the leaf node will be chained
@@ -94,7 +79,8 @@ public class DriverBtreeFormatBuilder extends AbstractBtreeFormatBuilder {
             groupCounter = (nLeaf - 1) % (maxNumberOfEntriesInNonLeafNodes);
             if (groupCounter == 0) {
                 // Create new node group if current group is full
-                leafNSKeyList = new ArrayList<IndexKey>(CarbonCommonConstants.CONSTANT_SIZE_TEN);
+                leafNSKeyList =
+                        new ArrayList<IndexKey>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
                 currentGroup = new BTreeNode[maxNumberOfEntriesInNonLeafNodes];
                 nodeGroups.add(currentGroup);
                 nInternal++;
@@ -102,14 +88,14 @@ public class DriverBtreeFormatBuilder extends AbstractBtreeFormatBuilder {
             }
             if (null != leafNSKeyList) {
                 leafNSKeyList.add(convertStartKeyToNodeEntry(
-                        segmentBuilderInfos.getDataFileMetadataList().get(metadataIndex)
-                                .getLeafNodeIndex().getBtreeIndex().getStartKey()));
+                        segmentBuilderInfos.getDataFileMetadataList().get(0).getLeafNodeList()
+                                .get(index).getLeafNodeIndex().getBtreeIndex().getStartKey()));
             }
             if (null != currentGroup) {
                 currentGroup[groupCounter] = curNode;
             }
         }
-        if (nLeaf == 0) {
+        if (totalNumberOfTuple == 0) {
             curNode = new BTreeNonLeafNode();
             return;
         }
@@ -117,6 +103,7 @@ public class DriverBtreeFormatBuilder extends AbstractBtreeFormatBuilder {
         addIntermediateNode(curNode, nodeGroups, currentGroup, interNSKeyList, nInternal);
         LOGGER.info(CarbonEngineLogEvent.UNIBI_CARBONENGINE_MSG,
                 "**********************************************"
-                        + "***********Total Number Rows In BTREE: " + nLeaf);
+                        + "***********Total Number Rows In BTREE: " + totalNumberOfTuple);
     }
+
 }

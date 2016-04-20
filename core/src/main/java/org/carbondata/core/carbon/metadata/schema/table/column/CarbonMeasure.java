@@ -44,7 +44,7 @@ public class CarbonMeasure extends CarbonDimension {
     private int precision;
 
     public CarbonMeasure(ColumnSchema columnSchema, int ordinal) {
-        super(columnSchema, ordinal);
+        super(columnSchema, ordinal, -1, -1);
         this.scale = columnSchema.getScale();
         this.precision = columnSchema.getPrecision();
     }

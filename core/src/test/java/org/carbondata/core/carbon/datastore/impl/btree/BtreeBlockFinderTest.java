@@ -16,24 +16,24 @@ import org.carbondata.core.keygenerator.mdkey.MultiDimKeyVarLengthGenerator;
 import org.carbondata.core.util.CarbonUtil;
 import org.junit.Test;
 
-public class SegmentBtreeFormatBuilderTest extends TestCase {
+public class BtreeBlockFinderTest extends TestCase {
 
     @Test public void testBtreeBuldingIsPorper() {
-        BlocksBuilder builder = new DriverBtreeFormatBuilder();
+        BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getDataFileMetadataList();
-        BlocksBuilderInfos infos = new BlocksBuilderInfos();
+        IndexesBuilderInfo infos = new IndexesBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
 
     }
 
     @Test public void testBtreeBuilderGetMethodIsGivingNotNullRootNode() {
-        BlocksBuilder builder = new DriverBtreeFormatBuilder();
+        BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getDataFileMetadataList();
-        BlocksBuilderInfos infos = new BlocksBuilderInfos();
+        IndexesBuilderInfo infos = new IndexesBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
-        DataBlock dataBlock = builder.get();
+        DataRefNode dataBlock = builder.get();
         assertTrue(dataBlock != null);
     }
 
@@ -42,25 +42,25 @@ public class SegmentBtreeFormatBuilderTest extends TestCase {
      * This method will be used to test when proper no dictionary key is passed
      * search is giving proper leaf node which is 2
      */ public void testBtreeSerachIsWorkingAndGivingPorperLeafNodeWithNoDictionary1() {
-        BlocksBuilder builder = new DriverBtreeFormatBuilder();
+        BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getFileMetadataListWithOnlyNoDictionaryKey();
-        BlocksBuilderInfos infos = new BlocksBuilderInfos();
+        IndexesBuilderInfo infos = new IndexesBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
-        DataBlock dataBlock = builder.get();
+        DataRefNode dataBlock = builder.get();
         assertTrue(dataBlock != null);
-        DataBlockFinder finder = new BTreeBasedBlockFinder(new int[] { -1 });
+        DataRefNodeFinder finder = new BtreeDataRefNodeFinder(new int[] { -1 });
         IndexKey key = new IndexKey();
-        ByteBuffer buffer = ByteBuffer.allocate(4 + 1);
+        ByteBuffer buffer = ByteBuffer.allocate(4 + 2);
         buffer.rewind();
-        buffer.put((byte) 1);
+        buffer.putShort((short)1);
         buffer.putInt(12);
         buffer.array();
         key.setNoDictionaryKeys(buffer.array());
-        DataBlock findFirstBlock = finder.findDataBlock(dataBlock, key, true);
-        assertEquals(1, findFirstBlock.getBlockNumber());
-        DataBlock findLastBlock = finder.findDataBlock(dataBlock, key, true);
-        assertEquals(1, findLastBlock.getBlockNumber());
+        DataRefNode findFirstBlock = finder.findFirstDataBlock(dataBlock, key);
+        assertEquals(1, findFirstBlock.nodeNumber());
+        DataRefNode findLastBlock = finder.findLastDataBlock(dataBlock, key);
+        assertEquals(1, findLastBlock.nodeNumber());
     }
 
     @Test
@@ -68,14 +68,14 @@ public class SegmentBtreeFormatBuilderTest extends TestCase {
      * Below method will test when key which is not present and key which is less than
      * first node key is passes for searching it should give first block
      */ public void testBtreeSerachIsWorkingAndGivingPorperLeafNodeWithNoDictionary() {
-        BlocksBuilder builder = new DriverBtreeFormatBuilder();
+        BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getFileMetadataListWithOnlyNoDictionaryKey();
-        BlocksBuilderInfos infos = new BlocksBuilderInfos();
+        IndexesBuilderInfo infos = new IndexesBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
-        DataBlock dataBlock = builder.get();
+        DataRefNode dataBlock = builder.get();
         assertTrue(dataBlock != null);
-        DataBlockFinder finder = new BTreeBasedBlockFinder(new int[] { -1 });
+        DataRefNodeFinder finder = new BtreeDataRefNodeFinder(new int[] { -1 });
         IndexKey key = new IndexKey();
         ByteBuffer buffer = ByteBuffer.allocate(4 + 1);
         buffer.rewind();
@@ -83,10 +83,10 @@ public class SegmentBtreeFormatBuilderTest extends TestCase {
         buffer.putInt(0);
         buffer.array();
         key.setNoDictionaryKeys(buffer.array());
-        DataBlock findFirstBlock = finder.findDataBlock(dataBlock, key, true);
-        assertEquals(0, findFirstBlock.getBlockNumber());
-        DataBlock findLastBlock = finder.findDataBlock(dataBlock, key, false);
-        assertEquals(0, findLastBlock.getBlockNumber());
+        DataRefNode findFirstBlock = finder.findFirstDataBlock(dataBlock, key);
+        assertEquals(0, findFirstBlock.nodeNumber());
+        DataRefNode findLastBlock = finder.findLastDataBlock(dataBlock, key);
+        assertEquals(0, findLastBlock.nodeNumber());
     }
 
     @Test
@@ -95,14 +95,14 @@ public class SegmentBtreeFormatBuilderTest extends TestCase {
      * first node key is passes for searching it should give first block
      */ public void testBtreeSerachIsWorkingAndGivingPorperLeafNodeWithDictionaryKey1()
             throws KeyGenException {
-        BlocksBuilder builder = new DriverBtreeFormatBuilder();
+        BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getFileMetadataListWithOnlyDictionaryKey();
-        BlocksBuilderInfos infos = new BlocksBuilderInfos();
+        IndexesBuilderInfo infos = new IndexesBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
-        DataBlock dataBlock = builder.get();
+        DataRefNode dataBlock = builder.get();
         assertTrue(dataBlock != null);
-        DataBlockFinder finder = new BTreeBasedBlockFinder(new int[] { 2, 2 });
+        DataRefNodeFinder finder = new BtreeDataRefNodeFinder(new int[] { 2, 2 });
         int[] dimensionBitLength =
                 CarbonUtil.getDimensionBitLength(new int[] { 10000, 10000 }, new int[] { 1, 1 });
         KeyGenerator multiDimKeyVarLengthGenerator =
@@ -111,10 +111,10 @@ public class SegmentBtreeFormatBuilderTest extends TestCase {
         IndexKey key = new IndexKey();
 
         key.setDictionaryKeys(multiDimKeyVarLengthGenerator.generateKey(new int[] { 1, 1 }));
-        DataBlock findFirstBlock = finder.findDataBlock(dataBlock, key, true);
-        assertEquals(0, findFirstBlock.getBlockNumber());
-        DataBlock findLastBlock = finder.findDataBlock(dataBlock, key, false);
-        assertEquals(0, findLastBlock.getBlockNumber());
+        DataRefNode findFirstBlock = finder.findFirstDataBlock(dataBlock, key);
+        assertEquals(0, findFirstBlock.nodeNumber());
+        DataRefNode findLastBlock = finder.findLastDataBlock(dataBlock, key);
+        assertEquals(0, findLastBlock.nodeNumber());
     }
 
     @Test
@@ -123,14 +123,14 @@ public class SegmentBtreeFormatBuilderTest extends TestCase {
      * first node key is passes for searching it should give first block
      */ public void testBtreeSerachIsWorkingAndGivingPorperLeafNodeWithDictionaryKey2()
             throws KeyGenException {
-        BlocksBuilder builder = new DriverBtreeFormatBuilder();
+        BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getFileMetadataListWithOnlyDictionaryKey();
-        BlocksBuilderInfos infos = new BlocksBuilderInfos();
+        IndexesBuilderInfo infos = new IndexesBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
-        DataBlock dataBlock = builder.get();
+        DataRefNode dataBlock = builder.get();
         assertTrue(dataBlock != null);
-        DataBlockFinder finder = new BTreeBasedBlockFinder(new int[] { 2, 2 });
+        DataRefNodeFinder finder = new BtreeDataRefNodeFinder(new int[] { 2, 2 });
         int[] dimensionBitLength =
                 CarbonUtil.getDimensionBitLength(new int[] { 10000, 10000 }, new int[] { 1, 1 });
         KeyGenerator multiDimKeyVarLengthGenerator =
@@ -139,10 +139,10 @@ public class SegmentBtreeFormatBuilderTest extends TestCase {
         IndexKey key = new IndexKey();
 
         key.setDictionaryKeys(multiDimKeyVarLengthGenerator.generateKey(new int[] { 0, 0 }));
-        DataBlock findFirstBlock = finder.findDataBlock(dataBlock, key, true);
-        assertEquals(0, findFirstBlock.getBlockNumber());
-        DataBlock findLastBlock = finder.findDataBlock(dataBlock, key, false);
-        assertEquals(0, findLastBlock.getBlockNumber());
+        DataRefNode findFirstBlock = finder.findFirstDataBlock(dataBlock, key);
+        assertEquals(0, findFirstBlock.nodeNumber());
+        DataRefNode findLastBlock = finder.findLastDataBlock(dataBlock, key);
+        assertEquals(0, findLastBlock.nodeNumber());
     }
 
     @Test
@@ -151,14 +151,14 @@ public class SegmentBtreeFormatBuilderTest extends TestCase {
      * last node key is passes for searching it should give first block
      */ public void testBtreeSerachIsWorkingAndGivingPorperLeafNodeWithDictionaryKey()
             throws KeyGenException {
-        BlocksBuilder builder = new DriverBtreeFormatBuilder();
+        BtreeBuilder builder = new BlockBtreeBuilder();
         List<DataFileMetadata> dataFileMetadataList = getFileMetadataListWithOnlyDictionaryKey();
-        BlocksBuilderInfos infos = new BlocksBuilderInfos();
+        IndexesBuilderInfo infos = new IndexesBuilderInfo();
         infos.setDataFileMetadataList(dataFileMetadataList);
         builder.build(infos);
-        DataBlock dataBlock = builder.get();
+        DataRefNode dataBlock = builder.get();
         assertTrue(dataBlock != null);
-        DataBlockFinder finder = new BTreeBasedBlockFinder(new int[] { 2, 2 });
+        DataRefNodeFinder finder = new BtreeDataRefNodeFinder(new int[] { 2, 2 });
         int[] dimensionBitLength =
                 CarbonUtil.getDimensionBitLength(new int[] { 10000, 10000 }, new int[] { 1, 1 });
         KeyGenerator multiDimKeyVarLengthGenerator =
@@ -168,10 +168,10 @@ public class SegmentBtreeFormatBuilderTest extends TestCase {
 
         key.setDictionaryKeys(
                 multiDimKeyVarLengthGenerator.generateKey(new int[] { 10001, 10001 }));
-        DataBlock findFirstBlock = finder.findDataBlock(dataBlock, key, true);
-        assertEquals(99, findFirstBlock.getBlockNumber());
-        DataBlock findLastBlock = finder.findDataBlock(dataBlock, key, false);
-        assertEquals(99, findLastBlock.getBlockNumber());
+        DataRefNode findFirstBlock = finder.findFirstDataBlock(dataBlock, key);
+        assertEquals(99, findFirstBlock.nodeNumber());
+        DataRefNode findLastBlock = finder.findLastDataBlock(dataBlock, key);
+        assertEquals(99, findLastBlock.nodeNumber());
     }
 
     private List<DataFileMetadata> getDataFileMetadataList() {
@@ -222,16 +222,16 @@ public class SegmentBtreeFormatBuilderTest extends TestCase {
                 byte[] startKey = multiDimKeyVarLengthGenerator.generateKey(new int[] { i, i });
                 byte[] endKey =
                         multiDimKeyVarLengthGenerator.generateKey(new int[] { i + 10, i + 10 });
-                ByteBuffer buffer = ByteBuffer.allocate(1 + 4);
+                ByteBuffer buffer = ByteBuffer.allocate(2 + 4);
                 buffer.rewind();
-                buffer.put((byte) 1);
+                buffer.putShort((short) 1);
                 buffer.putInt(i);
                 buffer.array();
                 byte[] noDictionaryStartKey = buffer.array();
 
-                ByteBuffer buffer1 = ByteBuffer.allocate(1 + 4);
+                ByteBuffer buffer1 = ByteBuffer.allocate(2 + 4);
                 buffer1.rewind();
-                buffer1.put((byte) 1);
+                buffer1.putShort((short)2);
                 buffer1.putInt(i + 10);
                 buffer1.array();
                 byte[] noDictionaryEndKey = buffer.array();

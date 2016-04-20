@@ -23,10 +23,9 @@ import org.carbondata.core.carbon.datastore.chunk.MeasureColumnDataChunk;
 import org.carbondata.core.datastorage.store.FileHolder;
 
 /**
- * Data block interface which will have all the method required during query
- * scanning
+ * Interface data block reference
  */
-public interface DataBlock {
+public interface DataRefNode {
 
     /**
      * Method to get the next block this can be used while scanning when
@@ -34,14 +33,14 @@ public interface DataBlock {
      *
      * @return next block
      */
-    DataBlock getNextBlock();
+    DataRefNode getNextDataRefNode();
 
     /**
      * to get the number of keys tuples present in the block
      *
      * @return number of keys in the block
      */
-    int blockSize();
+    int nodeSize();
 
     /**
      * Method can be used to get the block index .This can be used when multiple
@@ -50,7 +49,7 @@ public interface DataBlock {
      *
      * @return block number
      */
-    long getBlockNumber();
+    long nodeNumber();
 
     /**
      * This method will be used to get the max value of all the columns this can
@@ -61,10 +60,10 @@ public interface DataBlock {
     byte[][] getColumnsMaxValue();
 
     /**
-     * This method will be used to get the max value of all the columns this can
+     * This method will be used to get the min value of all the columns this can
      * be used in case of filter query
      *
-     * @param max value of all the columns
+     * @param min value of all the columns
      */
     byte[][] getColumnsMinValue();
 

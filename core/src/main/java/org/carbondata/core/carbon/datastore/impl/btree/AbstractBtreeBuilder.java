@@ -22,8 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.carbondata.core.carbon.datastore.BlocksBuilder;
-import org.carbondata.core.carbon.datastore.DataBlock;
+import org.carbondata.core.carbon.datastore.BtreeBuilder;
 import org.carbondata.core.carbon.datastore.IndexKey;
 import org.carbondata.core.constants.CarbonCommonConstants;
 import org.carbondata.core.util.CarbonProperties;
@@ -31,7 +30,7 @@ import org.carbondata.core.util.CarbonProperties;
 /**
  * Abstract Btree based builder
  */
-public abstract class AbstractBtreeFormatBuilder implements BlocksBuilder {
+public abstract class AbstractBtreeBuilder implements BtreeBuilder {
 
     /**
      * default Number of keys per page
@@ -53,7 +52,7 @@ public abstract class AbstractBtreeFormatBuilder implements BlocksBuilder {
      */
     protected BTreeNode root;
 
-    public AbstractBtreeFormatBuilder() {
+    public AbstractBtreeBuilder() {
         maxNumberOfEntriesInNonLeafNodes = Integer.parseInt(CarbonProperties.getInstance()
                 .getProperty("com.huawei.datastore.internalnodesize",
                         DEFAULT_NUMBER_OF_ENTRIES_NONLEAF + ""));
@@ -162,7 +161,7 @@ public abstract class AbstractBtreeFormatBuilder implements BlocksBuilder {
      * Below method will be used to get the first data block
      * in Btree case it will be root node
      */
-    @Override public DataBlock get() {
+    @Override public BTreeNode get() {
         return root;
     }
 }

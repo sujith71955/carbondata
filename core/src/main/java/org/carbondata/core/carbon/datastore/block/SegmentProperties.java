@@ -106,11 +106,11 @@ public class SegmentProperties {
     private int[] eachComplexDimColumnValueSize;
 
     /**
-     * below mapping will have mapping of the row group to dimensions ordinal
-     * for example if 3 dimension present in the rowgroupid 0 and its ordinal in
+     * below mapping will have mapping of the column group to dimensions ordinal
+     * for example if 3 dimension present in the columngroupid 0 and its ordinal in
      * 2,3,4 then map will contain 0,{2,3,4}
      */
-    private Map<Integer, int[]> rowGroupAndItsCardinalityMapping;
+    private Map<Integer, KeyGenerator> columnGroupAndItsKeygenartor;
 
     /**
      * this will be used to split the fixed length key
@@ -130,10 +130,9 @@ public class SegmentProperties {
         measuresOrdinalToBlockMapping =
                 new HashMap<Integer, Integer>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         fillOrdinalToBlockMappingForDimension();
-        fillOrdinalToBlockMappingForMeasure();
-        fillRowGroupAndItsOrdinalMapping(columnCardinality);
+        fillOrdinalToBlockIndexMappingForMeasureColumns();
+        fillColumnGroupAndItsCardinality(columnCardinality);
         fillKeyGeneratorDetails();
-        getRowGroupAndItsOrdinalMapping(dimensions);
     }
 
     /**
@@ -144,16 +143,16 @@ public class SegmentProperties {
         int blockOrdinal = -1;
         CarbonDimension dimension = null;
         int index = 0;
-        int prvRowGroupId = -1;
+        int prvcolumnGroupId = -1;
         while (index < dimensions.size()) {
             dimension = dimensions.get(index);
-            // if row id is same as previous one then block index will be
+            // if column id is same as previous one then block index will be
             // same
-            if (dimension.isColumnar() || dimension.rowGroupId() != prvRowGroupId) {
+            if (dimension.isColumnar() || dimension.columnGroupId() != prvcolumnGroupId) {
                 blockOrdinal++;
             }
             dimensionOrdinalToBlockMapping.put(dimension.getOrdinal(), blockOrdinal);
-            prvRowGroupId = dimension.rowGroupId();
+            prvcolumnGroupId = dimension.columnGroupId();
             index++;
         }
         index = 0;
@@ -166,9 +165,11 @@ public class SegmentProperties {
     }
 
     /**
-     * below method to fill mapping of measure and its mapping to file blocks
+     * Below method will be used to fill the mapping
+     * of measure ordinal to its block index mapping in
+     * file
      */
-    private void fillOrdinalToBlockMappingForMeasure() {
+    private void fillOrdinalToBlockIndexMappingForMeasureColumns() {
         int blockOrdinal = 0;
         int index = 0;
         while (index < measures.size()) {
@@ -203,27 +204,65 @@ public class SegmentProperties {
         List<Integer> cardinalityIndexForComplexDimensionColumn =
                 new ArrayList<Integer>(columnsInTable.size());
         boolean isComplexDimensionStarted = false;
+        CarbonDimension carbonDimension = null;
+        // to store the position of dimension in surrogate key array which is
+        // participating in mdkey
+        int keyOrdinal = 0;
+        int previousColumnGroup = -1;
+        // to store the ordinal of the column group ordinal
+        int columnGroupOrdinal = 0;
         for (int i = 0; i < columnsInTable.size(); i++) {
             columnSchema = columnsInTable.get(i);
             if (columnSchema.isDimensionColumn()) {
-                CarbonDimension carbonDimension =
-                        new CarbonDimension(columnSchema, ++dimensonOrdinal);
+
                 tableOrdinal++;
                 // not adding the cardinality of the non dictionary
                 // column as it was not the part of mdkey
-                if (carbonDimension.getEncoder().contains(Encoding.DICTIONARY)
-                        && !isComplexDimensionStarted && carbonDimension.numberOfChild() == 0) {
+                if (CarbonUtil.hasEncoding(columnSchema.getEncodingList(), Encoding.DICTIONARY)
+                        && !isComplexDimensionStarted && columnSchema.getNumberOfChild() == 0) {
                     cardinalityIndexForNormalDimensionColumn.add(tableOrdinal);
+                    if (columnSchema.isColumnar()) {
+                        // if it is a columnar dimension participated in mdkey then added
+                        // key ordinal and dimension ordinal
+                        carbonDimension =
+                                new CarbonDimension(columnSchema, ++dimensonOrdinal, keyOrdinal++,
+                                        -1);
+                    } else {
+                        // if not columnnar then it is a column group dimension
+
+                        // below code to handle first dimension of the column group
+                        // in this case ordinal of the column group will be 0
+                        if (previousColumnGroup != columnSchema.getRowGroupId()) {
+                            columnGroupOrdinal = 0;
+                            carbonDimension = new CarbonDimension(columnSchema, ++dimensonOrdinal,
+                                    keyOrdinal++, columnGroupOrdinal++);
+                        }
+                        // if previous dimension  column group id is same as current then
+                        // then its belongs to same row group
+                        else {
+                            carbonDimension = new CarbonDimension(columnSchema, ++dimensonOrdinal,
+                                    keyOrdinal++, columnGroupOrdinal++);
+                        }
+                        previousColumnGroup = columnSchema.getRowGroupId();
+                    }
                 }
                 // as complex type will be stored at last so once complex type started all the dimension will be
                 // added to complex type
-                else if (carbonDimension.getDataType().equals(DataType.ARRAY) || carbonDimension
-                        .getDataType().equals(DataType.STRUCT) || carbonDimension.getDataType()
-                        .equals(DataType.MAP) || isComplexDimensionStarted) {
+                else if (isComplexDimensionStarted || CarbonUtil
+                        .hasDataType(columnSchema.getDataType(),
+                                new DataType[] { DataType.ARRAY, DataType.STRUCT, DataType.MAP })) {
                     cardinalityIndexForComplexDimensionColumn.add(tableOrdinal);
+                    carbonDimension = new CarbonDimension(columnSchema, ++dimensonOrdinal, -1, -1);
                     complexDimensions.add(carbonDimension);
                     isComplexDimensionStarted = true;
                     continue;
+                }
+                else 
+                {
+                	// for no dictionary dimension
+                	carbonDimension =
+                            new CarbonDimension(columnSchema, ++dimensonOrdinal, -1,
+                                    -1);
                 }
                 dimensions.add(carbonDimension);
             } else {
@@ -260,7 +299,7 @@ public class SegmentProperties {
                 new ArrayList<Integer>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         List<Boolean> isDictionaryColumn =
                 new ArrayList<Boolean>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
-        int prvRowGroupId = -1;
+        int prvcolumnGroupId = -1;
         int counter = 0;
         while (counter < dimensions.size()) {
             CarbonDimension carbonDimension = dimensions.get(counter);
@@ -278,15 +317,16 @@ public class SegmentProperties {
             }
             // if in a group then need to add how many columns a selected in
             // group
-            if (!carbonDimension.isColumnar() && carbonDimension.rowGroupId() == prvRowGroupId) {
-                // incrementing the previous value of the list as it is in same row group
+            if (!carbonDimension.isColumnar()
+                    && carbonDimension.columnGroupId() == prvcolumnGroupId) {
+                // incrementing the previous value of the list as it is in same column group
                 dimensionPartitionList.set(dimensionPartitionList.size() - 1,
                         dimensionPartitionList.get(dimensionPartitionList.size() - 1) + 1);
             } else if (!carbonDimension.isColumnar()) {
                 dimensionPartitionList.add(1);
                 isDictionaryColumn.add(true);
             }
-            prvRowGroupId = carbonDimension.rowGroupId();
+            prvcolumnGroupId = carbonDimension.columnGroupId();
             counter++;
         }
         // get the partitioner
@@ -325,60 +365,65 @@ public class SegmentProperties {
     }
 
     /**
-     * Below method will be used to create a mapping of row group and its column cardinality this
-     * mapping will have row group id to cardinality of the dimension present in
-     * the row group.This mapping will be used during query execution, to create
-     * a mask key for the row group dimension which will be used in aggregation
-     * and filter query as row group dimension will be stored at the bit level
+     * Below method will be used to create a mapping of column group and its column cardinality this
+     * mapping will have column group id to cardinality of the dimension present in
+     * the column group.This mapping will be used during query execution, to create
+     * a mask key for the column group dimension which will be used in aggregation
+     * and filter query as column group dimension will be stored at the bit level
      */
-    private void fillRowGroupAndItsOrdinalMapping(int[] cardinality) {
-        // list of row groups this will store all the row group column
-        Map<Integer, List<Integer>> rowGroupOrdinal =
+    private void fillColumnGroupAndItsCardinality(int[] cardinality) {
+        // mapping of the column group and its ordinal
+        Map<Integer, List<Integer>> columnGroupAndOrdinalMapping =
                 new HashMap<Integer, List<Integer>>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
-        // to store a row group
-        List<Integer> currentRowGroup = null;
+        // to store a column group
+        List<Integer> currentColumnGroup = null;
         // current index
         int index = 0;
-        // previous row group to check all the column of row id has bee selected
-        int prvRowGroupId = -1;
+        // previous column group to check all the column of column id has bee selected
+        int prvColumnGroupId = -1;
         while (index < dimensions.size()) {
             // if dimension group id is not zero and it is same as the previous
-            // row id
+            // column id
             // then we need to add ordinal of that column as it belongs to same
-            // row group
+            // column group
             if (!dimensions.get(index).isColumnar()
-                    && dimensions.get(index).rowGroupId() == prvRowGroupId) {
-                currentRowGroup.add(index);
+                    && dimensions.get(index).columnGroupId() == prvColumnGroupId) {
+                currentColumnGroup.add(index);
             }
-            // if row id not -1 then new row group has come
-            // so we need to create a list of new row id group and add the
-            // ordianl
+            // if column is not a columnar then new column group has come
+            // so we need to create a list of new column id group and add the
+            // ordinal
             else if (!dimensions.get(index).isColumnar()) {
-                currentRowGroup = new ArrayList<Integer>();
-                rowGroupOrdinal.put(dimensions.get(index).rowGroupId(), currentRowGroup);
-                currentRowGroup.add(index);
+                currentColumnGroup = new ArrayList<Integer>();
+                columnGroupAndOrdinalMapping
+                        .put(dimensions.get(index).columnGroupId(), currentColumnGroup);
+                currentColumnGroup.add(index);
             }
-            // update the row id every time,this is required to group the
+            // update the column id every time,this is required to group the
             // columns
-            // of the same row group
-            prvRowGroupId = dimensions.get(index).rowGroupId();
+            // of the same column group
+            prvColumnGroupId = dimensions.get(index).columnGroupId();
             index++;
         }
         // Initializing the map
-        this.rowGroupAndItsCardinalityMapping = new HashMap<Integer, int[]>(rowGroupOrdinal.size());
-        int[] rowGroupCardinality = null;
+        this.columnGroupAndItsKeygenartor =
+                new HashMap<Integer, KeyGenerator>(columnGroupAndOrdinalMapping.size());
+        int[] columnGroupCardinality = null;
         index = 0;
-        Iterator<Entry<Integer, List<Integer>>> iterator = rowGroupOrdinal.entrySet().iterator();
+        Iterator<Entry<Integer, List<Integer>>> iterator =
+                columnGroupAndOrdinalMapping.entrySet().iterator();
         while (iterator.hasNext()) {
             Entry<Integer, List<Integer>> next = iterator.next();
             List<Integer> currentGroupOrdinal = next.getValue();
             // create the cardinality array
-            rowGroupCardinality = new int[currentGroupOrdinal.size()];
-            for (int i = 0; i < rowGroupCardinality.length; i++) {
+            columnGroupCardinality = new int[currentGroupOrdinal.size()];
+            for (int i = 0; i < columnGroupCardinality.length; i++) {
                 // fill the cardinality
-                rowGroupCardinality[i] = cardinality[currentGroupOrdinal.get(i)];
+                columnGroupCardinality[i] = cardinality[currentGroupOrdinal.get(i)];
             }
-            this.rowGroupAndItsCardinalityMapping.put(next.getKey(), rowGroupCardinality);
+            this.columnGroupAndItsKeygenartor.put(next.getKey(), new MultiDimKeyVarLengthGenerator(
+                    CarbonUtil
+                            .getDimensionBitLength(cardinality, new int[] { cardinality.length })));
         }
     }
 
@@ -479,65 +524,17 @@ public class SegmentProperties {
     }
 
     /**
-     * @return the rowGroupAndItsCardinalityMapping
-     */
-    public Map<Integer, int[]> getRowGroupAndItsCardinalityMapping() {
-        return rowGroupAndItsCardinalityMapping;
-    }
-
-    /**
-     * Below method will be used to create a mapping of row group columns this
-     * mapping will have row group id to all the dimension ordinal present in
-     * the row group This mapping will be used during query execution, to create
-     * a mask key for the row group dimension which will be used in aggregation
-     * and filter query as row group dimension will be stored in bit level
-     */
-    private static Map<Integer, List<Integer>> getRowGroupAndItsOrdinalMapping(
-            List<CarbonDimension> dimensions) {
-        // list of row groups this will store all the row group column
-        Map<Integer, List<Integer>> rowGroupAndItsOrdinalsMapping =
-                new HashMap<Integer, List<Integer>>();
-        // to store a row group
-        List<Integer> currentRowGroup = null;
-        // current index
-        int index = 0;
-        // previous row group to check all the column of row id has bee selected
-        int prvRowGroupId = -1;
-        int ordinal = 0;
-        while (index < dimensions.size()) {
-            // if dimension group id is not zero and it is same as the previous
-            // row id
-            // then we need to add ordinal of that column as it belongs to same
-            // row group
-            if (!dimensions.get(index).isColumnar()
-                    && dimensions.get(index).rowGroupId() == prvRowGroupId) {
-                currentRowGroup.add(dimensions.get(index).getOrdinal() - ordinal);
-            }
-            // if row id not -1 then new row group has come
-            // so we need to create a list of new row id group and add the
-            // ordianl
-            else if (!dimensions.get(index).isColumnar()) {
-                ordinal = 0;
-                currentRowGroup = new ArrayList<Integer>();
-                rowGroupAndItsOrdinalsMapping
-                        .put(dimensions.get(index).rowGroupId(), currentRowGroup);
-                currentRowGroup.add(ordinal);
-                ordinal = dimensions.get(index).getOrdinal();
-            }
-            // update the row id every time,this is required to group the
-            // columns
-            // of the same row group
-            prvRowGroupId = dimensions.get(index).rowGroupId();
-            index++;
-        }
-        return rowGroupAndItsOrdinalsMapping;
-    }
-
-    /**
      * @return the fixedLengthKeySplitter
      */
     public ColumnarSplitter getFixedLengthKeySplitter() {
         return fixedLengthKeySplitter;
+    }
+
+    /**
+     * @return the columnGroupAndItsKeygenartor
+     */
+    public Map<Integer, KeyGenerator> getColumnGroupAndItsKeygenartor() {
+        return columnGroupAndItsKeygenartor;
     }
 
 }

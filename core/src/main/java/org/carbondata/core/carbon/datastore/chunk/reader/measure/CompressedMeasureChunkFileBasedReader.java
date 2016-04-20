@@ -60,12 +60,12 @@ public class CompressedMeasureChunkFileBasedReader extends AbstractMeasureChunkR
 	@Override
 	public MeasureColumnDataChunk[] readMeasureChunks(FileHolder fileReader,
 			int... blockIndexes) {
-		MeasureColumnDataChunk[] dataHolders = new MeasureColumnDataChunk[values.length];
+		MeasureColumnDataChunk[] datChunk = new MeasureColumnDataChunk[values.length];
 		for (int i = 0; i < blockIndexes.length; i++) {
-			dataHolders[blockIndexes[i]] = readMeasureChunk(fileReader,
+			datChunk[blockIndexes[i]] = readMeasureChunk(fileReader,
 					blockIndexes[i]);
 		}
-		return dataHolders;
+		return datChunk;
 	}
 
 	/**
@@ -79,7 +79,7 @@ public class CompressedMeasureChunkFileBasedReader extends AbstractMeasureChunkR
 	@Override
 	public MeasureColumnDataChunk readMeasureChunk(FileHolder fileReader,
 			int blockIndex) {
-		MeasureColumnDataChunk dataHolder = new MeasureColumnDataChunk();
+		MeasureColumnDataChunk datChunk = new MeasureColumnDataChunk();
 		// create a new uncompressor
 		ValueCompressonHolder.UnCompressValue copy = values[blockIndex]
 				.getNew();
@@ -93,11 +93,11 @@ public class CompressedMeasureChunkFileBasedReader extends AbstractMeasureChunkR
 				compressionModel.getDecimal()[blockIndex],
 				compressionModel.getMaxValue()[blockIndex]);
 		// set the data chunk
-		dataHolder.setMeasureDataHolder(measureDataHolder);
+		datChunk.setMeasureDataHolder(measureDataHolder);
 		// set the enun value indexes
-		dataHolder.setNullValueIndexHolder(measureColumnChunk
+		datChunk.setNullValueIndexHolder(measureColumnChunk
 				.get(blockIndex).getNullValueIndexForColumn());
-		return dataHolder;
+		return datChunk;
 	}
 
 }

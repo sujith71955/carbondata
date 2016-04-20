@@ -11,7 +11,7 @@ import org.carbondata.core.constants.CarbonCommonConstants;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class BlockMetadataInfoTest extends TestCase {
+public class SegmentPropertiesTest extends TestCase {
 
     private SegmentProperties blockMetadataInfos;
 
@@ -122,13 +122,6 @@ public class BlockMetadataInfoTest extends TestCase {
         assertEquals(2, blockMetadataInfos.getComplexDimensions().size());
     }
 
-    @Test public void testRowGroupToCardinalityMappingHasProperValue() {
-        Map<Integer, int[]> rowGroupAndItsCardinalityMapping =
-                blockMetadataInfos.getRowGroupAndItsCardinalityMapping();
-        assertEquals(rowGroupAndItsCardinalityMapping.get(0).length, 2);
-        assertEquals(rowGroupAndItsCardinalityMapping.get(1).length, 3);
-    }
-
     @Test public void testEachColumnValueSizeHasProperValue() {
         int[] size = { 1, -1, 2, -1, 3 };
         int[] eachDimColumnValueSize = blockMetadataInfos.getEachDimColumnValueSize();
@@ -162,8 +155,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setNumberOfChild(0);
@@ -177,8 +170,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setNumberOfChild(0);
         return dimColumn;
@@ -191,8 +184,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setRowGroupId(0);
@@ -207,8 +200,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setNumberOfChild(0);
@@ -223,8 +216,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setNumberOfChild(0);
         return dimColumn;
@@ -237,8 +230,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setRowGroupId(1);
@@ -253,8 +246,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setNumberOfChild(0);
@@ -269,8 +262,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setNumberOfChild(0);
@@ -285,8 +278,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.ARRAY);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setNumberOfChild(1);
@@ -300,8 +293,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setNumberOfChild(0);
@@ -314,8 +307,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnName("IMEI_COUNT");
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DELTA);
         dimColumn.setEncodintList(encodeList);
         return dimColumn;
@@ -327,8 +320,8 @@ public class BlockMetadataInfoTest extends TestCase {
         dimColumn.setColumnName("IMEI_COUNT1");
         dimColumn.setColumnUniqueId(1);
         dimColumn.setDataType(DataType.STRING);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DELTA);
         dimColumn.setEncodintList(encodeList);
         return dimColumn;

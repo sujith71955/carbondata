@@ -21,19 +21,25 @@ package org.carbondata.core.carbon.datastore;
 /**
  * Below Interface is to search a block
  */
-public interface DataBlockFinder {
+public interface DataRefNodeFinder {
 
     /**
-     * Below method will be used to get the data block based on search key
+     * Below method will be used to get the first tentative block which matches with
+     * the search key
      *
      * @param dataBlocks complete data blocks present
      * @param serachKey  key to be search
-     * @param isFirst    in block we can have duplicate data if data is sorted then
-     *                   for scanning we need to scan first instance of the search key till last
-     *                   so for this is user is passing is first true it will return the first instance
-     *                   if false then it will return the last. In case of unsorted data this parameter
-     *                   does not matter implementation is will handle that scenario
      * @return data block
      */
-    DataBlock findDataBlock(DataBlock dataBlocks, IndexKey serachKey, boolean isFirst);
+    DataRefNode findFirstDataBlock(DataRefNode dataBlocks, IndexKey searchKey);
+
+    /**
+     * Below method will be used to get the last tentative block which matches with
+     * the search key
+     *
+     * @param dataBlocks complete data blocks present
+     * @param serachKey  key to be search
+     * @return data block
+     */
+    DataRefNode findLastDataBlock(DataRefNode dataBlocks, IndexKey searchKey);
 }

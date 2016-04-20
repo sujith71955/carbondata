@@ -21,37 +21,46 @@ package org.carbondata.core.carbon.datastore;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.carbondata.common.logging.LogService;
+import org.carbondata.common.logging.LogServiceFactory;
 import org.carbondata.core.carbon.AbsoluteTableIdentifier;
-import org.carbondata.core.carbon.datastore.block.TableBlock;
-import org.carbondata.core.carbon.datastore.block.TableBlockInfos;
+import org.carbondata.core.carbon.datastore.block.DataBlock;
+import org.carbondata.core.carbon.datastore.block.TableBlockInfo;
+import org.carbondata.core.carbon.datastore.exception.IndexBuilderException;
+import org.carbondata.core.carbon.metadata.leafnode.DataFileMetadata;
 import org.carbondata.core.constants.CarbonCommonConstants;
+import org.carbondata.core.util.CarbonCoreLogEvent;
+import org.carbondata.core.util.CarbonUtil;
+import org.carbondata.core.util.CarbonUtilException;
 
 /**
- * Singleton Class to handle loading, unloading,clearing,storing of the table blocks
+ * Singleton Class to handle loading, unloading,clearing,storing of the table
+ * blocks
  */
-public class CarbonTablesStore {
+public class BlockStore {
 
+    private static final LogService LOGGER =
+            LogServiceFactory.getLogService(BlockStore.class.getName());
     /**
      * singleton instance
      */
-    private static final CarbonTablesStore CARBONTABLEBLOCKSINSTANCE = new CarbonTablesStore();
+    private static final BlockStore CARBONTABLEBLOCKSINSTANCE = new BlockStore();
 
     /**
      * map to hold the table and its list of blocks
      */
-    private Map<AbsoluteTableIdentifier, Map<TableBlockInfos, TableBlock>> tableBlocksMap;
+    private Map<AbsoluteTableIdentifier, Map<TableBlockInfo, DataBlock>> tableBlocksMap;
 
     /**
-     * table and its lock object to
-     * this will be useful in case of concurrent query scenario when more than
-     * one query comes for same table and in that case it will ensure that
-     * only one query will able to load the blocks
+     * table and its lock object to this will be useful in case of concurrent
+     * query scenario when more than one query comes for same table and in that
+     * case it will ensure that only one query will able to load the blocks
      */
     private Map<AbsoluteTableIdentifier, Object> tableLockMap;
 
-    public CarbonTablesStore() {
+    public BlockStore() {
         tableBlocksMap =
-                new ConcurrentHashMap<AbsoluteTableIdentifier, Map<TableBlockInfos, TableBlock>>(
+                new ConcurrentHashMap<AbsoluteTableIdentifier, Map<TableBlockInfo, DataBlock>>(
                         CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         tableLockMap = new ConcurrentHashMap<AbsoluteTableIdentifier, Object>(
                 CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
@@ -62,66 +71,77 @@ public class CarbonTablesStore {
      *
      * @return singleton instance
      */
-    public static CarbonTablesStore getInstance() {
+    public static BlockStore getInstance() {
         return CARBONTABLEBLOCKSINSTANCE;
     }
 
     /**
-     * below method will be used to load the block which are not loaded and
-     * to get the loaded blocks if all the blocks which are passed is loaded
-     * then it will not load , else it will load.
+     * below method will be used to load the block which are not loaded and to
+     * get the loaded blocks if all the blocks which are passed is loaded then
+     * it will not load , else it will load.
      *
      * @param tableBlocksInfos        list of blocks to be loaded
      * @param absoluteTableIdentifier absolute Table Identifier to identify the table
+     * @throws IndexBuilderException
      */
-    public List<TableBlock> loadAndGetBlocks(List<TableBlockInfos> tableBlocksInfos,
-            AbsoluteTableIdentifier absoluteTableIdentifier) {
-        List<TableBlock> loadedBlocksList =
-                new ArrayList<TableBlock>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+    public List<DataBlock> loadAndGetBlocks(List<TableBlockInfo> tableBlocksInfos,
+            AbsoluteTableIdentifier absoluteTableIdentifier) throws IndexBuilderException {
+        List<DataBlock> loadedBlocksList =
+                new ArrayList<DataBlock>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         // add the instance to lock map if it is not present
         tableLockMap.putIfAbsent(absoluteTableIdentifier, new Object());
         // sort the block infos
-        // so block will be loaded in sorted order this will be required for query execution
+        // so block will be loaded in sorted order this will be required for
+        // query execution
         Collections.sort(tableBlocksInfos);
         // get the instance
         Object lockObject = tableLockMap.get(absoluteTableIdentifier);
         // Acquire the lock to ensure only one query is loading the table blocks
         // if same block is assigned to both the queries
         synchronized (lockObject) {
-            Map<TableBlockInfos, TableBlock> tableBlockMapTemp =
+            Map<TableBlockInfo, DataBlock> tableBlockMapTemp =
                     tableBlocksMap.get(absoluteTableIdentifier);
             // if it is loading for first time
             if (null == tableBlockMapTemp) {
-                tableBlockMapTemp = new HashMap<TableBlockInfos, TableBlock>();
+                tableBlockMapTemp = new HashMap<TableBlockInfo, DataBlock>();
                 tableBlocksMap.put(absoluteTableIdentifier, tableBlockMapTemp);
             }
-            TableBlock tableBlock = null;
-            for (TableBlockInfos blockInfos : tableBlocksInfos) {
-                // if table block is already loaded then do not load
-                // that block
-                TableBlock tableBlocks = tableBlockMapTemp.get(blockInfos);
-                if (null == tableBlocks) {
-                    tableBlock = new TableBlock();
-                    tableBlock.loadCarbonTableBlock(blockInfos);
-                    tableBlockMapTemp.put(blockInfos, tableBlock);
-                    loadedBlocksList.add(tableBlock);
-                } else {
+            DataBlock tableBlock = null;
+            DataFileMetadata dataFileMatadata = null;
+            try {
+                for (TableBlockInfo blockInfo : tableBlocksInfos) {
+                    // if table block is already loaded then do not load
+                    // that block
+                    tableBlock = tableBlockMapTemp.get(blockInfo);
+                    if (null == tableBlock) {
+                        // getting the data file metadata of the block
+                        dataFileMatadata = CarbonUtil.readMetadatFile(blockInfo.getFilePath(),
+                                blockInfo.getBlockOffset());
+                        tableBlock = new DataBlock();
+                        // building the block
+                        tableBlock.buildDataBlock(dataFileMatadata, blockInfo.getFilePath());
+                        tableBlockMapTemp.put(blockInfo, tableBlock);
+                    }
                     loadedBlocksList.add(tableBlock);
                 }
+            } catch (CarbonUtilException e) {
+                LOGGER.error(CarbonCoreLogEvent.UNIBI_CARBONCORE_MSG,
+                        "Problem while loading the block");
+                throw new IndexBuilderException(e);
             }
         }
         return loadedBlocksList;
     }
 
     /**
-     * This will be used to remove a particular blocks
-     * useful in case of deletion of some of the blocks
-     * in case of retention or may be some other scenario
+     * This will be used to remove a particular blocks useful in case of
+     * deletion of some of the blocks in case of retention or may be some other
+     * scenario
      *
      * @param removeTableBlocksInfos  blocks to be removed
      * @param absoluteTableIdentifier absolute table identifier
      */
-    public void removeTableBlocks(List<TableBlockInfos> removeTableBlocksInfos,
+    public void removeTableBlocks(List<TableBlockInfo> removeTableBlocksInfos,
             AbsoluteTableIdentifier absoluteTableIdentifier) {
         // get the lock object if lock object is not present then it is not
         // loaded at all
@@ -132,20 +152,19 @@ public class CarbonTablesStore {
         }
         // Acquire the lock and remove only those instance which was loaded
         synchronized (lockObject) {
-            Map<TableBlockInfos, TableBlock> map = tableBlocksMap.get(absoluteTableIdentifier);
+            Map<TableBlockInfo, DataBlock> map = tableBlocksMap.get(absoluteTableIdentifier);
             // if there is no loaded blocks then return
             if (null == map) {
                 return;
             }
-            for (TableBlockInfos blockInfos : removeTableBlocksInfos) {
+            for (TableBlockInfo blockInfos : removeTableBlocksInfos) {
                 map.remove(blockInfos);
             }
         }
     }
 
     /**
-     * remove all the details of a table
-     * this will be used in case of drop table
+     * remove all the details of a table this will be used in case of drop table
      *
      * @param absoluteTableIdentifier absolute table identifier to find the table
      */

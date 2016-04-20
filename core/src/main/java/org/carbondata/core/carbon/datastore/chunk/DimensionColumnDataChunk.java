@@ -18,10 +18,10 @@
  */
 package org.carbondata.core.carbon.datastore.chunk;
 
+import org.carbondata.query.carbon.executor.infos.KeyStructureInfo;
+
 /**
- * Interface for dimension column chunk. This is not required because dimension
- * chunk can be encoded with different type of encoder so handing will be
- * different
+ * Interface for dimension column chunk.
  */
 public interface DimensionColumnDataChunk {
 
@@ -33,7 +33,7 @@ public interface DimensionColumnDataChunk {
      * @param rowId  row id of the chunk
      * @return how many bytes was copied
      */
-    int fillChunkData(byte[] data, int offset, int rowId);
+    int fillChunkData(byte[] data, int offset, int columnIndex, KeyStructureInfo restructuringInfo);
 
     /**
      * Below method to get  the data based in row id
@@ -42,18 +42,7 @@ public interface DimensionColumnDataChunk {
      *            row id of the data
      * @return chunk
      */
-    byte[] getChunkData(int rowId);
-
-    /**
-     * below method will be used to get the surrogate key based on row id
-     * This will be used for dimension  data aggregation
-     * This can be used only for fixed length dimension column
-     * chunk as key generator was used to generate the key
-     *
-     * @param rowId
-     * @return surrogate key
-     */
-    int getSurrogate(int columnIndex);
+    byte[] getChunkData(int columnIndex);
 
     /**
      * Below method will be used get the chunk attributes
@@ -61,12 +50,4 @@ public interface DimensionColumnDataChunk {
      * @return chunk attributes
      */
     DimensionChunkAttributes getAttributes();
-
-    /**
-     * Method to get the complete chunk
-     *
-     * @return complete chunk
-     */
-    byte[] getChunkData();
-
 }

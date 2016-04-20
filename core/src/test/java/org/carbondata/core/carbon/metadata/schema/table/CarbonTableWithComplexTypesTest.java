@@ -18,6 +18,9 @@
  */
 package org.carbondata.core.carbon.metadata.schema.table;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import junit.framework.TestCase;
 import org.carbondata.core.carbon.metadata.datatype.DataType;
 import org.carbondata.core.carbon.metadata.encoder.Encoding;
@@ -72,8 +75,8 @@ public class CarbonTableWithComplexTypesTest extends TestCase {
         dimColumn.setColumnUniqueId(UUID.randomUUID().toString());
         dimColumn.setDataType(DataType.STRING);
         dimColumn.setDimensionColumn(true);
-        Set<Encoding> encodeList =
-                new HashSet<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
+        List<Encoding> encodeList =
+                new ArrayList<Encoding>(CarbonCommonConstants.DEFAULT_COLLECTION_SIZE);
         encodeList.add(Encoding.DICTIONARY);
         dimColumn.setEncodintList(encodeList);
         dimColumn.setNumberOfChild(0);

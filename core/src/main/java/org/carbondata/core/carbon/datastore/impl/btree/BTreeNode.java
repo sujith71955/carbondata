@@ -18,13 +18,13 @@
  */
 package org.carbondata.core.carbon.datastore.impl.btree;
 
-import org.carbondata.core.carbon.datastore.DataBlock;
+import org.carbondata.core.carbon.datastore.DataRefNode;
 import org.carbondata.core.carbon.datastore.IndexKey;
 
 /**
- * Interafce for btree node
+ * Interface for btree node
  */
-public interface BTreeNode extends DataBlock {
+public interface BTreeNode extends DataRefNode {
 
     /**
      * below method will return the one node indexes

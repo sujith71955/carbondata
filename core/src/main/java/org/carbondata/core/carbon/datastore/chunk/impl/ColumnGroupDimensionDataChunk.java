@@ -1,16 +1,14 @@
 package org.carbondata.core.carbon.datastore.chunk.impl;
 
-import java.util.List;
-
 import org.carbondata.core.carbon.datastore.chunk.DimensionChunkAttributes;
 import org.carbondata.core.carbon.datastore.chunk.DimensionColumnDataChunk;
 import org.carbondata.query.carbon.executor.infos.KeyStructureInfo;
 
 /**
- * This class is holder of the dimension column chunk data of the variable
- * length key size
+ * This class is holder of the dimension column chunk data of the fixed length
+ * key size
  */
-public class VariableLengthDimensionDataChunk implements DimensionColumnDataChunk {
+public class ColumnGroupDimensionDataChunk implements DimensionColumnDataChunk {
 
     /**
      * dimension chunk attributes
@@ -18,9 +16,9 @@ public class VariableLengthDimensionDataChunk implements DimensionColumnDataChun
     private DimensionChunkAttributes chunkAttributes;
 
     /**
-     * data chunk
+     * data chunks
      */
-    private List<byte[]> dataChunk;
+    private byte[] dataChunk;
 
     /**
      * Constructor for this class
@@ -28,7 +26,7 @@ public class VariableLengthDimensionDataChunk implements DimensionColumnDataChun
      * @param dataChunk       data chunk
      * @param chunkAttributes chunk attributes
      */
-    public VariableLengthDimensionDataChunk(List<byte[]> dataChunk,
+    public ColumnGroupDimensionDataChunk(byte[] dataChunk,
             DimensionChunkAttributes chunkAttributes) {
         this.chunkAttributes = chunkAttributes;
         this.dataChunk = dataChunk;
@@ -43,11 +41,12 @@ public class VariableLengthDimensionDataChunk implements DimensionColumnDataChun
      * @param keyStructureInfo define the structure of the key
      * @return how many bytes was copied
      */
-    @Override public int fillChunkData(byte[] data, int offset, int index,
+    @Override public int fillChunkData(byte[] data, int offset, int rowId,
             KeyStructureInfo restructuringInfo) {
-        // no required in this case because this column chunk is not the part if
-        // mdkey
-        return 0;
+        byte[] maskedKey = getMaskedKey(dataChunk, rowId * chunkAttributes.getColumnValueSize(),
+                restructuringInfo);
+        System.arraycopy(maskedKey, 0, data, offset, maskedKey.length);
+        return maskedKey.length;
     }
 
     /**
@@ -56,11 +55,27 @@ public class VariableLengthDimensionDataChunk implements DimensionColumnDataChun
      * @param row id row id of the data
      * @return chunk
      */
-    @Override public byte[] getChunkData(int index) {
-        if (null != chunkAttributes.getInvertedIndexes()) {
-            index = chunkAttributes.getInvertedIndexesReverse()[index];
+    public byte[] getMaskedKey(byte[] data, int offset, KeyStructureInfo info) {
+        byte[] maskedKey = new byte[info.getMaskByteRanges().length];
+        int counter = 0;
+        int byteRange = 0;
+        for (int i = 0; i < info.getMaskByteRanges().length; i++) {
+            byteRange = info.getMaskByteRanges()[i];
+            maskedKey[counter++] = (byte) (data[byteRange + offset] & info.getMaxKey()[byteRange]);
         }
-        return dataChunk.get(index);
+        return maskedKey;
+    }
+
+    /**
+     * Below method to get the data based in row id
+     *
+     * @param row id row id of the data
+     * @return chunk
+     */
+    @Override public byte[] getChunkData(int rowId) {
+        byte[] data = new byte[chunkAttributes.getColumnValueSize()];
+        System.arraycopy(dataChunk, rowId * data.length, data, 0, data.length);
+        return data;
     }
 
     /**

@@ -18,27 +18,20 @@
  */
 package org.carbondata.core.carbon.datastore.block;
 
-import java.io.IOException;
 import java.util.Arrays;
 
-import org.carbondata.common.logging.LogService;
-import org.carbondata.common.logging.LogServiceFactory;
-import org.carbondata.core.carbon.datastore.BlocksBuilder;
-import org.carbondata.core.carbon.datastore.BlocksBuilderInfos;
-import org.carbondata.core.carbon.datastore.DataBlock;
-import org.carbondata.core.carbon.datastore.impl.btree.BlockBtreeFormatBuilder;
+import org.carbondata.core.carbon.datastore.DataRefNode;
+import org.carbondata.core.carbon.datastore.BtreeBuilder;
+import org.carbondata.core.carbon.datastore.IndexesBuilderInfo;
+import org.carbondata.core.carbon.datastore.impl.btree.BlockletBtreeBuilder;
 import org.carbondata.core.carbon.metadata.leafnode.DataFileMetadata;
-import org.carbondata.core.util.CarbonCoreLogEvent;
-import org.carbondata.query.util.DataFileMetadataConverter;
 
 /**
  * Class which is responsible for loading the b+ tree block. This class will
  * persist all the detail of a table block
  */
-public class TableBlock {
+public class DataBlock {
 
-    private static final LogService LOGGER =
-            LogServiceFactory.getLogService(TableBlock.class.getName());
     /**
      * vo class which will hold the RS information of the block
      */
@@ -47,7 +40,7 @@ public class TableBlock {
     /**
      * data block
      */
-    private DataBlock dataBlock;
+    private DataRefNode dataRefNode;
 
     /**
      * total number of row present in the block
@@ -55,38 +48,26 @@ public class TableBlock {
     private long totalNumberOfRows;
 
     /**
-     * Below method is store the blocks in some data structure
+     * Below method will be used to load the data block
      *
      * @param blockInfo block detail
      */
-    public void loadCarbonTableBlock(TableBlockInfos blockInfo) {
-
-        DataFileMetadataConverter converter = new DataFileMetadataConverter();
-        // get the data file metadata from thrift
-        DataFileMetadata dataFileMetadata = null;
-        try {
-            dataFileMetadata = converter
-                    .readDataFileMetadata(blockInfo.getFilePath(), blockInfo.getBlockOffset());
-        } catch (IOException e) {
-            LOGGER.error(CarbonCoreLogEvent.UNIBI_CARBONCORE_MSG,
-                    e + "Unable to read the block metadata from file");
-            return;
-        }
+    public void buildDataBlock(DataFileMetadata dataFileMetadata, String filePath) {
         // create a metadata details
         // this will be useful in query handling
         segmentProperties = new SegmentProperties(dataFileMetadata.getColumnInTable(),
                 dataFileMetadata.getSegmentInfo().getColumnCardinality());
         // create a segment builder info
-        BlocksBuilderInfos segmentBuilderInfos = new BlocksBuilderInfos();
-        BlocksBuilder blocksBuilder = new BlockBtreeFormatBuilder();
-        segmentBuilderInfos.setDataFileMetadataList(
+        IndexesBuilderInfo indeBuilderInfo = new IndexesBuilderInfo();
+        BtreeBuilder blocksBuilder = new BlockletBtreeBuilder();
+        indeBuilderInfo.setDataFileMetadataList(
                 Arrays.asList(new DataFileMetadata[] { dataFileMetadata }));
-        segmentBuilderInfos
+        indeBuilderInfo
                 .setEachDimensionBlockSize(segmentProperties.getDimensionColumnsValueSize());
-        segmentBuilderInfos.setFilePath(blockInfo.getFilePath());
+        indeBuilderInfo.setFilePath(filePath);
         // load the metadata
-        blocksBuilder.build(segmentBuilderInfos);
-        dataBlock = blocksBuilder.get();
+        blocksBuilder.build(indeBuilderInfo);
+        dataRefNode = blocksBuilder.get();
     }
 
     /**
@@ -113,7 +94,7 @@ public class TableBlock {
     /**
      * @return the dataBlock
      */
-    public DataBlock getDataBlock() {
-        return dataBlock;
+    public DataRefNode getDataRefNode() {
+        return dataRefNode;
     }
 }

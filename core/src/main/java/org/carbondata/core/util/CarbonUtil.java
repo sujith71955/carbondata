@@ -36,7 +36,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.carbondata.common.logging.LogService;
 import org.carbondata.common.logging.LogServiceFactory;
+import org.carbondata.core.carbon.metadata.datatype.DataType;
 import org.carbondata.core.carbon.metadata.encoder.Encoding;
+import org.carbondata.core.carbon.metadata.leafnode.DataFileMetadata;
 import org.carbondata.core.carbon.metadata.leafnode.datachunk.DataChunk;
 import org.carbondata.core.constants.CarbonCommonConstants;
 import org.carbondata.core.datastorage.store.FileHolder;
@@ -59,6 +61,7 @@ import org.carbondata.core.metadata.SliceMetaData;
 import org.carbondata.core.metadata.ValueEncoderMeta;
 import org.carbondata.core.reader.CarbonMetaDataReader;
 import org.carbondata.core.vo.HybridStoreModel;
+import org.carbondata.query.util.DataFileMetadataConverter;
 import org.pentaho.di.core.exception.KettleException;
 
 public final class CarbonUtil {
@@ -572,8 +575,7 @@ public final class CarbonUtil {
                 // for row store
                 int totalSize = 0;
                 for (int j = 0; j < dimPartitioner[i].length; j++) {
-                    newdims[dimCounter] =
-                            CarbonUtil.getIncrementedCardinality(dimCardinality[dimCounter]);
+                    newdims[dimCounter] = getIncrementedCardinality(dimCardinality[dimCounter]);
                     totalSize += newdims[dimCounter];
                     dimCounter++;
                 }
@@ -1004,7 +1006,7 @@ public final class CarbonUtil {
         catch (IOException e) {
             throw new CarbonUtilException("Problem while reading the slicemeta data file ", e);
         } finally {
-            CarbonUtil.closeStreams(objectInputStream, stream);
+            closeStreams(objectInputStream, stream);
         }
         return readObject;
     }
@@ -1018,14 +1020,14 @@ public final class CarbonUtil {
                     "Slice Metadata file Path: " + path + '/' + CarbonUtil
                             .getSliceMetaDataFileName(nextRestructFolder));
             stream = FileFactory.getDataOutputStream(
-                    path + File.separator + CarbonUtil.getSliceMetaDataFileName(nextRestructFolder),
+                    path + File.separator + getSliceMetaDataFileName(nextRestructFolder),
                     FileFactory.getFileType(path));
             objectOutputStream = new ObjectOutputStream(stream);
             objectOutputStream.writeObject(sliceMetaData);
         } catch (IOException e) {
             LOGGER.error(CarbonCoreLogEvent.UNIBI_CARBONCORE_MSG, e.getMessage());
         } finally {
-            CarbonUtil.closeStreams(objectOutputStream, stream);
+            closeStreams(objectOutputStream, stream);
         }
     }
 
@@ -1069,38 +1071,6 @@ public final class CarbonUtil {
             });
         }
         return files;
-    }
-
-    /**
-     * This method will be used to for sending the new slice signal to engine
-     */
-    public static void flushSEQGenLruCache() {
-        try {
-            // inform engine to load new slice
-            Class<?> c =
-                    Class.forName("com.huawei.unibi.carbon.surrogatekeysgenerator.lru.LRUCache");
-            Class[] argTypes = new Class[] {};
-            // get the instance of CubeSliceLoader
-            Method main = c.getDeclaredMethod("getIntance", argTypes);
-            Object invoke = main.invoke(null, null);
-
-            // ionvoke loadSliceFromFile
-            Method declaredMethod = c.getDeclaredMethod("flush");
-            // pass cube name and store location
-            declaredMethod.invoke(invoke);
-        } catch (ClassNotFoundException classNotFoundException) {
-            LOGGER.error(CarbonCoreLogEvent.UNIBI_CARBONCORE_MSG,
-                    "Error while clearing the cache " + classNotFoundException);
-        } catch (NoSuchMethodException noSuchMethodException) {
-            LOGGER.error(CarbonCoreLogEvent.UNIBI_CARBONCORE_MSG,
-                    "Error while clearing the cache " + noSuchMethodException);
-        } catch (IllegalAccessException illegalAccessException) {
-            LOGGER.error(CarbonCoreLogEvent.UNIBI_CARBONCORE_MSG,
-                    "Error while clearing the cache " + illegalAccessException);
-        } catch (InvocationTargetException invocationTargetException) {
-            LOGGER.error(CarbonCoreLogEvent.UNIBI_CARBONCORE_MSG,
-                    "Error while clearing the cache " + invocationTargetException);
-        }
     }
 
     /**
@@ -1398,6 +1368,7 @@ public final class CarbonUtil {
 
     /**
      * Convert int array to Integer list
+     *
      * @param array
      * @return List<Integer>
      */
@@ -1536,7 +1507,7 @@ public final class CarbonUtil {
         } catch (IOException e) {
             throw new CarbonUtilException("Problem while reading the file", e);
         } finally {
-            CarbonUtil.closeStreams(dataInputStream);
+            closeStreams(dataInputStream);
         }
 
         return cardinality;
@@ -1614,7 +1585,7 @@ public final class CarbonUtil {
         } catch (IOException e) {
             return new LoadMetadataDetails[0];
         } finally {
-            CarbonUtil.closeStreams(buffReader, inStream, dataInputStream);
+            closeStreams(buffReader, inStream, dataInputStream);
         }
 
         return listOfLoadFolderDetailsArray;
@@ -1671,7 +1642,7 @@ public final class CarbonUtil {
                             .getMessage());
             throw new KettleException("Not able to write level cardinality file", e);
         } finally {
-            CarbonUtil.closeStreams(channel, fileOutputStream);
+            closeStreams(channel, fileOutputStream);
         }
     }
 
@@ -1693,14 +1664,14 @@ public final class CarbonUtil {
             LOGGER.error(CarbonCoreLogEvent.UNIBI_CARBONCORE_MSG,
                     "@@@@@ Error while reading SliceMetaData File @@@@@ :" + path);
         } finally {
-            CarbonUtil.closeStreams(objectInputStream, stream);
+            closeStreams(objectInputStream, stream);
         }
         return readObject;
     }
 
     public static SliceMetaData readSliceMetaDataFile(String folderPath,
             int currentRestructNumber) {
-        String path = folderPath + '/' + CarbonUtil.getSliceMetaDataFileName(currentRestructNumber);
+        String path = folderPath + '/' + getSliceMetaDataFileName(currentRestructNumber);
         return readSliceMetaDataFile(path);
     }
 
@@ -1971,25 +1942,24 @@ public final class CarbonUtil {
         CarbonFile carbonFile = FileFactory.getCarbonFile(filePath, fileType);
         return carbonFile.getSize();
     }
-    
+
     /**
      * This API will record the indexes of the dimension which doesnt have
      * Dictionary values.
+     *
      * @param currentDims .
      * @return
      */
-    public static int[] getNoDictionaryColIndex(Dimension[] currentDims)
-    {
-      List<Integer> dirSurrogateList=new ArrayList<Integer>(currentDims.length);
-      for(Dimension dim:currentDims)
-      {
-        if(dim.isNoDictionaryDim())
-        {
-          dirSurrogateList.add(dim.getOrdinal());
+    public static int[] getNoDictionaryColIndex(Dimension[] currentDims) {
+        List<Integer> dirSurrogateList = new ArrayList<Integer>(currentDims.length);
+        for (Dimension dim : currentDims) {
+            if (dim.isNoDictionaryDim()) {
+                dirSurrogateList.add(dim.getOrdinal());
+            }
         }
-      }
-      int[] noDictionaryValIndex=ArrayUtils.toPrimitive(dirSurrogateList.toArray(new Integer[dirSurrogateList.size()]));
-      return noDictionaryValIndex;
+        int[] noDictionaryValIndex = ArrayUtils
+                .toPrimitive(dirSurrogateList.toArray(new Integer[dirSurrogateList.size()]));
+        return noDictionaryValIndex;
     }
 
     /**
@@ -2023,15 +1993,13 @@ public final class CarbonUtil {
                 // fully filled bits means complete byte or number of bits
                 // assigned will be in
                 // multiplication of 8
-                bitLength[dimCounter] =
-                        CarbonUtil.getBitLengthFullyFilled(dimCardinality[dimCounter]);
+                bitLength[dimCounter] = getBitLengthFullyFilled(dimCardinality[dimCounter]);
                 dimCounter++;
             } else {
                 // for row store
                 int totalSize = 0;
                 for (int j = 0; j < dimPartitioner[i]; j++) {
-                    bitLength[dimCounter] =
-                            CarbonUtil.getIncrementedCardinality(dimCardinality[dimCounter]);
+                    bitLength[dimCounter] = getIncrementedCardinality(dimCardinality[dimCounter]);
                     totalSize += bitLength[dimCounter];
                     dimCounter++;
                 }
@@ -2083,6 +2051,52 @@ public final class CarbonUtil {
                 new MeasureMetaDataModel(minValue, maxValue, decimal, dataTypeSelected.length,
                         uniqueValue, type, dataTypeSelected);
         return ValueCompressionUtil.getValueCompressionModel(measureMetadataModel);
+    }
+
+    /**
+     * Below method will be used to check whether particular encoding is present
+     * in the dimension or not
+     *
+     * @param dimension
+     * @param encoding  encoding to search
+     * @return if encoding is present in dimension
+     */
+    public static boolean hasEncoding(List<Encoding> encodings, Encoding encoding) {
+        return encodings.contains(encoding);
+    }
+
+    /**
+     * below method is to check whether data type is present in the data type array
+     *
+     * @param dataType  data type to be searched
+     * @param dataTypes all data types
+     * @return if data type is present
+     */
+    public static boolean hasDataType(DataType dataType, DataType[] dataTypes) {
+        for (int i = 0; i < dataTypes.length; i++) {
+            if (dataType.equals(dataTypes[i])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Below method will be used to read the data file matadata
+     *
+     * @param filePath file path
+     * @param offset   offset in the file
+     * @return Data file metadata instance
+     * @throws CarbonUtilException
+     */
+    public static DataFileMetadata readMetadatFile(String filePath, long offset)
+            throws CarbonUtilException {
+        DataFileMetadataConverter fileMetadataConverter = new DataFileMetadataConverter();
+        try {
+            return fileMetadataConverter.readDataFileMetadata(filePath, offset);
+        } catch (IOException e) {
+            throw new CarbonUtilException("Problem while reading the file metadata", e);
+        }
     }
 }
 

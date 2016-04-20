@@ -18,7 +18,7 @@
  */
 package org.carbondata.core.carbon.datastore.impl.btree;
 
-import org.carbondata.core.carbon.datastore.BlocksBuilderInfos;
+import org.carbondata.core.carbon.datastore.IndexesBuilderInfo;
 import org.carbondata.core.carbon.datastore.chunk.DimensionColumnDataChunk;
 import org.carbondata.core.carbon.datastore.chunk.MeasureColumnDataChunk;
 import org.carbondata.core.carbon.datastore.chunk.reader.DimensionColumnChunkReader;
@@ -31,9 +31,9 @@ import org.carbondata.core.datastorage.store.compression.ValueCompressionModel;
 import org.carbondata.core.util.CarbonUtil;
 
 /**
- * Leaf node class of a btree
+ * Leaf node class of a Blocklet btree
  */
-public class BlockBTreeLeafNode extends AbstractBtreeLeafNode {
+public class BlockletLeafNode extends AbstractBtreeLeafNode {
 
     /**
      * reader for dimension chunk
@@ -54,7 +54,7 @@ public class BlockBTreeLeafNode extends AbstractBtreeLeafNode {
      *                     this will be used during query execution when we can
      *                     give some leaf node of a btree to one executor some to other
      */
-    public BlockBTreeLeafNode(BlocksBuilderInfos builderInfos, int leafIndex, long nodeNumber) {
+    public BlockletLeafNode(IndexesBuilderInfo builderInfos, int leafIndex, long nodeNumber) {
         // get a lead node min max
         LeafNodeMinMaxIndex minMaxIndex =
                 builderInfos.getDataFileMetadataList().get(0).getLeafNodeList().get(leafIndex)
