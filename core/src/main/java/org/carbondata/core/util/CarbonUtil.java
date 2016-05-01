@@ -1,4 +1,5 @@
 /*
+
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -49,6 +50,8 @@ import java.util.concurrent.Executors;
 
 import org.carbondata.common.logging.LogService;
 import org.carbondata.common.logging.LogServiceFactory;
+import org.carbondata.core.carbon.datastore.IndexKey;
+import org.carbondata.core.carbon.datastore.block.SegmentProperties;
 import org.carbondata.core.carbon.datastore.chunk.impl.FixedLengthDimensionDataChunk;
 import org.carbondata.core.carbon.metadata.blocklet.DataFileFooter;
 import org.carbondata.core.carbon.metadata.blocklet.datachunk.DataChunk;
@@ -66,6 +69,7 @@ import org.carbondata.core.datastorage.store.fileperations.AtomicFileOperationsI
 import org.carbondata.core.datastorage.store.filesystem.CarbonFile;
 import org.carbondata.core.datastorage.store.filesystem.CarbonFileFilter;
 import org.carbondata.core.datastorage.store.impl.FileFactory;
+import org.carbondata.core.keygenerator.KeyGenException;
 import org.carbondata.core.keygenerator.mdkey.NumberCompressor;
 import org.carbondata.core.load.LoadMetadataDetails;
 import org.carbondata.core.metadata.BlockletInfo;
@@ -1903,6 +1907,49 @@ public final class CarbonUtil {
     int surrogate = buffer.getInt();
     buffer.clear();
     return surrogate;
+  }
+
+  /**
+   * method will create a default end key in case of no end key is been derived using existing
+   * filter or in case of non filter queries.
+   *
+   * @param segmentProperties
+   * @return
+   * @throws KeyGenException
+   */
+  public static IndexKey prepareDefaultEndKey(SegmentProperties segmentProperties)
+      throws KeyGenException {
+    long[] dictionarySurrogateKey =
+        new long[segmentProperties.getDimensions().size() - segmentProperties
+            .getNumberOfNoDictionaryDimension()];
+    Arrays.fill(dictionarySurrogateKey, Long.MAX_VALUE);
+    IndexKey endIndexKey;
+    byte[] dictionaryendMdkey =
+        segmentProperties.getDimensionKeyGenerator().generateKey(dictionarySurrogateKey);
+    // TODO need to handle for no dictionary dimensions
+    endIndexKey = new IndexKey(dictionaryendMdkey, null);
+    return endIndexKey;
+  }
+
+  /**
+   * method will create a default end key in case of no end key is been
+   * derived using existing filter or in case of non filter queries.
+   *
+   * @param segmentProperties
+   * @return
+   * @throws KeyGenException
+   */
+  public static IndexKey prepareDefaultStartKey(SegmentProperties segmentProperties)
+      throws KeyGenException {
+    IndexKey startIndexKey;
+    long[] dictionarySurrogateKey =
+        new long[segmentProperties.getDimensions().size() - segmentProperties
+            .getNumberOfNoDictionaryDimension()];
+    byte[] dictionaryStartMdkey =
+        segmentProperties.getDimensionKeyGenerator().generateKey(dictionarySurrogateKey);
+    // TODO need to handle for no dictionary dimensions
+    startIndexKey = new IndexKey(dictionaryStartMdkey, null);
+    return startIndexKey;
   }
 
   /**

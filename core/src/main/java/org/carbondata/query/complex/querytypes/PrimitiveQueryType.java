@@ -29,8 +29,8 @@ import org.carbondata.core.carbon.SqlStatement;
 import org.carbondata.core.constants.CarbonCommonConstants;
 import org.carbondata.core.datastorage.store.columnar.ColumnarKeyStoreDataHolder;
 import org.carbondata.core.metadata.CarbonMetadata.Dimension;
+import org.carbondata.query.carbon.processor.BlocksChunkHolder;
 import org.carbondata.query.datastorage.InMemoryTable;
-import org.carbondata.query.evaluators.BlockDataHolder;
 import org.carbondata.query.util.DataTypeConverter;
 import org.carbondata.query.util.QueryExecutorUtility;
 
@@ -189,15 +189,10 @@ public class PrimitiveQueryType implements GenericQueryType {
   @Override public void setKeyOrdinalForQuery(int keyOrdinalForQuery) {
   }
 
-  @Override public void fillRequiredBlockData(BlockDataHolder blockDataHolder) {
-    if (null == blockDataHolder.getColumnarKeyStore()[blockIndex]) {
-      blockDataHolder.getColumnarKeyStore()[blockIndex] = blockDataHolder.getLeafDataBlock()
-          .getColumnarKeyStore(blockDataHolder.getFileHolder(), blockIndex, false, null);
-    } else {
-      if (!blockDataHolder.getColumnarKeyStore()[blockIndex].getColumnarKeyStoreMetadata()
-          .isUnCompressed()) {
-        blockDataHolder.getColumnarKeyStore()[blockIndex].unCompress();
-      }
+  @Override public void fillRequiredBlockData(BlocksChunkHolder blockChunkHolder) {
+    if (null == blockChunkHolder.getDimensionDataChunk()[blockIndex]) {
+      blockChunkHolder.getDimensionDataChunk()[blockIndex] = blockChunkHolder.getDataBlock()
+          .getDimensionChunk(blockChunkHolder.getFileReader(), blockIndex);
     }
   }
 }

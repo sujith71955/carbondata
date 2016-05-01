@@ -32,7 +32,9 @@ import org.carbondata.core.carbon.datastore.block.AbstractIndex;
 import org.carbondata.core.carbon.datastore.impl.btree.BTreeDataRefNodeFinder;
 import org.carbondata.core.carbon.metadata.datatype.DataType;
 import org.carbondata.core.carbon.metadata.encoder.Encoding;
+import org.carbondata.core.keygenerator.KeyGenException;
 import org.carbondata.core.keygenerator.KeyGenerator;
+import org.carbondata.core.util.CarbonUtil;
 import org.carbondata.query.carbon.executor.exception.QueryExecutionException;
 import org.carbondata.query.carbonfilterinterface.ExpressionType;
 import org.carbondata.query.expression.BinaryExpression;
@@ -95,6 +97,17 @@ public class FilterExpressionProcessor implements FilterProcessor {
     IndexKey searchStartKey =
         filterResolver.getstartKey(tableSegment.getSegmentProperties().getDimensionKeyGenerator());
     IndexKey searchEndKey = filterResolver.getEndKey(tableSegment, tableIdentifier);
+    if (null == searchStartKey && null == searchEndKey) {
+      try {
+        // TODO need to handle for no dictionary dimensions
+        searchStartKey = CarbonUtil.prepareDefaultStartKey(tableSegment.getSegmentProperties());
+        // TODO need to handle for no dictionary dimensions
+        searchEndKey = CarbonUtil.prepareDefaultEndKey(tableSegment.getSegmentProperties());
+      } catch (KeyGenException e) {
+        return listOfDataBlocksToScan;
+      }
+    }
+
     LOGGER.info(CarbonEngineLogEvent.UNIBI_CARBONENGINE_MSG,
         "Successfully retrieved the start and end key");
     long startTimeInMillis = System.currentTimeMillis();
@@ -114,6 +127,7 @@ public class FilterExpressionProcessor implements FilterProcessor {
             System.currentTimeMillis() - startTimeInMillis)
             + " Total number of data reference node for executing filter(s) "
             + listOfDataBlocksToScan.size());
+
     return listOfDataBlocksToScan;
   }
 
@@ -304,6 +318,8 @@ public class FilterExpressionProcessor implements FilterProcessor {
               return new ConditionalFilterResolverImpl(expression, true, true);
             }
           }
+        } else {
+          return new RowLevelFilterResolverImpl(expression, false, false, tableIdentifier);
         }
     }
     return new RowLevelFilterResolverImpl(expression, false, false, tableIdentifier);
