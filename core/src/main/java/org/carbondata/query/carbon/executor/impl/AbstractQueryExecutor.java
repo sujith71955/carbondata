@@ -279,8 +279,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
           .getEndKey(blockIndex, queryModel.getAbsoluteTableIdentifier());
       if (null == startIndexKey && null == endIndexKey) {
         try {
-          startIndexKey = CarbonUtil.prepareDefaultStartKey(segmentProperties);
-          endIndexKey = CarbonUtil.prepareDefaultEndKey(segmentProperties);
+          startIndexKey = FilterUtil.prepareDefaultStartKey(segmentProperties);
+          endIndexKey = FilterUtil.prepareDefaultEndKey(segmentProperties);
         } catch (KeyGenException e) {
           throw new QueryExecutionException(e);
         }
@@ -288,8 +288,8 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
       }
     } else {
       try {
-        startIndexKey = CarbonUtil.prepareDefaultStartKey(segmentProperties);
-        endIndexKey = CarbonUtil.prepareDefaultEndKey(segmentProperties);
+        startIndexKey = FilterUtil.prepareDefaultStartKey(segmentProperties);
+        endIndexKey = FilterUtil.prepareDefaultEndKey(segmentProperties);
       } catch (KeyGenException e) {
         throw new QueryExecutionException(e);
       }

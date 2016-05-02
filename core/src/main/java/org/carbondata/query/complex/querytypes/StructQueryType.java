@@ -36,7 +36,7 @@ import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
-public class StructQueryType implements GenericQueryType {
+public class StructQueryType extends ComplexQueryType implements GenericQueryType {
 
   private List<GenericQueryType> children = new ArrayList<GenericQueryType>();
   private String name;
@@ -45,9 +45,7 @@ public class StructQueryType implements GenericQueryType {
   private int keyOrdinalForQuery;
 
   public StructQueryType(String name, String parentname, int blockIndex) {
-    this.name = name;
-    this.parentname = parentname;
-    this.blockIndex = blockIndex;
+    super(name, parentname, blockIndex);
   }
 
   @Override public void addChildren(GenericQueryType newChild) {
@@ -117,25 +115,12 @@ public class StructQueryType implements GenericQueryType {
       ColumnarKeyStoreDataHolder[] columnarKeyStoreDataHolder, int rowNumber,
       DataOutputStream dataOutputStream) throws IOException {
     byte[] input = new byte[8];
-    if (!columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata().isSorted()) {
-      System.arraycopy(columnarKeyStoreDataHolder[blockIndex].getKeyBlockData(),
-          columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata()
-              .getColumnReverseIndex()[rowNumber] * columnarKeyStoreDataHolder[blockIndex]
-              .getColumnarKeyStoreMetadata().getEachRowSize(), input, 0,
-          columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata().getEachRowSize());
-    } else {
-
-      System.arraycopy(columnarKeyStoreDataHolder[blockIndex].getKeyBlockData(),
-          rowNumber * columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata()
-              .getEachRowSize(), input, 0,
-          columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata().getEachRowSize());
-    }
-
+    copyBlockDataChunk(columnarKeyStoreDataHolder, rowNumber, input);
     ByteBuffer byteArray = ByteBuffer.wrap(input);
     int childElement = byteArray.getInt();
     dataOutputStream.writeInt(childElement);
     if (childElement == 0) {
-      //            b.putInt(0);
+      // b.putInt(0);
     } else {
       for (int i = 0; i < childElement; i++) {
         children.get(i)
@@ -190,10 +175,7 @@ public class StructQueryType implements GenericQueryType {
   }
 
   @Override public void fillRequiredBlockData(BlocksChunkHolder blockChunkHolder) {
-    if (null == blockChunkHolder.getDimensionDataChunk()[blockIndex]) {
-      blockChunkHolder.getDimensionDataChunk()[blockIndex] = blockChunkHolder.getDataBlock()
-          .getDimensionChunk(blockChunkHolder.getFileReader(), blockIndex);
-    }
+    readBlockDataChunk(blockChunkHolder);
 
     for (int i = 0; i < children.size(); i++) {
       children.get(i).fillRequiredBlockData(blockChunkHolder);

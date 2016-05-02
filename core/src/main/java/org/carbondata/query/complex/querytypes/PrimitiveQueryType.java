@@ -43,7 +43,7 @@ import org.apache.spark.sql.types.StringType;
 import org.apache.spark.sql.types.TimestampType;
 import org.apache.spark.unsafe.types.UTF8String;
 
-public class PrimitiveQueryType implements GenericQueryType {
+public class PrimitiveQueryType extends ComplexQueryType implements GenericQueryType {
 
   private int index;
 
@@ -58,9 +58,7 @@ public class PrimitiveQueryType implements GenericQueryType {
 
   public PrimitiveQueryType(String name, String parentname, int blockIndex,
       SqlStatement.Type dataType) {
-    this.name = name;
-    this.parentname = parentname;
-    this.blockIndex = blockIndex;
+    super(name, parentname, blockIndex);
     this.dataType = dataType;
   }
 
@@ -115,18 +113,7 @@ public class PrimitiveQueryType implements GenericQueryType {
     byte[] currentVal =
         new byte[columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata()
             .getEachRowSize()];
-    if (!columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata().isSorted()) {
-      System.arraycopy(columnarKeyStoreDataHolder[blockIndex].getKeyBlockData(),
-          columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata()
-              .getColumnReverseIndex()[rowNumber] * columnarKeyStoreDataHolder[blockIndex]
-              .getColumnarKeyStoreMetadata().getEachRowSize(), currentVal, 0,
-          columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata().getEachRowSize());
-    } else {
-      System.arraycopy(columnarKeyStoreDataHolder[blockIndex].getKeyBlockData(),
-          rowNumber * columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata()
-              .getEachRowSize(), currentVal, 0,
-          columnarKeyStoreDataHolder[blockIndex].getColumnarKeyStoreMetadata().getEachRowSize());
-    }
+    copyBlockDataChunk(columnarKeyStoreDataHolder, rowNumber, currentVal);
     dataOutputStream.write(currentVal);
   }
 
@@ -190,9 +177,6 @@ public class PrimitiveQueryType implements GenericQueryType {
   }
 
   @Override public void fillRequiredBlockData(BlocksChunkHolder blockChunkHolder) {
-    if (null == blockChunkHolder.getDimensionDataChunk()[blockIndex]) {
-      blockChunkHolder.getDimensionDataChunk()[blockIndex] = blockChunkHolder.getDataBlock()
-          .getDimensionChunk(blockChunkHolder.getFileReader(), blockIndex);
-    }
+    readBlockDataChunk(blockChunkHolder);
   }
 }

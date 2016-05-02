@@ -34,7 +34,6 @@ import org.carbondata.core.carbon.metadata.datatype.DataType;
 import org.carbondata.core.carbon.metadata.encoder.Encoding;
 import org.carbondata.core.keygenerator.KeyGenException;
 import org.carbondata.core.keygenerator.KeyGenerator;
-import org.carbondata.core.util.CarbonUtil;
 import org.carbondata.query.carbon.executor.exception.QueryExecutionException;
 import org.carbondata.query.carbonfilterinterface.ExpressionType;
 import org.carbondata.query.expression.BinaryExpression;
@@ -100,9 +99,9 @@ public class FilterExpressionProcessor implements FilterProcessor {
     if (null == searchStartKey && null == searchEndKey) {
       try {
         // TODO need to handle for no dictionary dimensions
-        searchStartKey = CarbonUtil.prepareDefaultStartKey(tableSegment.getSegmentProperties());
+        searchStartKey = FilterUtil.prepareDefaultStartKey(tableSegment.getSegmentProperties());
         // TODO need to handle for no dictionary dimensions
-        searchEndKey = CarbonUtil.prepareDefaultEndKey(tableSegment.getSegmentProperties());
+        searchEndKey = FilterUtil.prepareDefaultEndKey(tableSegment.getSegmentProperties());
       } catch (KeyGenException e) {
         return listOfDataBlocksToScan;
       }
