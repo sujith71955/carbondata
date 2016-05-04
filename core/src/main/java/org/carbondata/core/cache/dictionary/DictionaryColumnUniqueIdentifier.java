@@ -39,10 +39,30 @@ public class DictionaryColumnUniqueIdentifier {
 
   private DataType dataType;
 
+  /**
+   * Will be used in case of reverse dictionary cache which will be used
+   * in case of data loading.
+   *
+   * @param carbonTableIdentifier
+   * @param columnIdentifier
+   */
   public DictionaryColumnUniqueIdentifier(CarbonTableIdentifier carbonTableIdentifier,
-      String columnIdentifier, DataType dataType) {
+      String columnIdentifier) {
     this.carbonTableIdentifier = carbonTableIdentifier;
     this.columnIdentifier = columnIdentifier;
+  }
+
+  /**
+   * Will be used in case of forward dictionary cache in case
+   * of query execution.
+   *
+   * @param carbonTableIdentifier
+   * @param columnIdentifier
+   * @param dataType
+   */
+  public DictionaryColumnUniqueIdentifier(CarbonTableIdentifier carbonTableIdentifier,
+      String columnIdentifier, DataType dataType) {
+    this(carbonTableIdentifier, columnIdentifier);
     this.dataType = dataType;
   }
 

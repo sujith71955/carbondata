@@ -908,10 +908,10 @@ public final class CarbonLoaderUtil {
         .getCarbonTable(model.getDatabaseName() + '_' + model.getTableName());
     List<CarbonDimension> dimensions = carbonTable.getDimensionByTableName(model.getAggTableName());
     List<CarbonMeasure> measures = carbonTable.getMeasureByTableName(model.getAggTableName());
-    for (CarbonDimension carbonDimension : dimensions) {
+    for(CarbonDimension carbonDimension : dimensions){
       columnList.add(carbonDimension.getColName());
     }
-    for (CarbonMeasure carbonMeasure : measures) {
+    for(CarbonMeasure carbonMeasure : measures){
       columnList.add(carbonMeasure.getColName());
     }
     return columnList;
@@ -1045,13 +1045,9 @@ public final class CarbonLoaderUtil {
   }
 
   public static Dictionary getDictionary(CarbonTableIdentifier tableIdentifier,
-      String columnIdentifier, String carbonStorePath) throws CarbonUtilException {
-    CarbonTable carbonTable = org.carbondata.core.carbon.metadata.CarbonMetadata.getInstance()
-        .getCarbonTable(tableIdentifier.getTableUniqueName());
-    CarbonDimension dimension = org.carbondata.core.carbon.metadata.CarbonMetadata.getInstance()
-        .getCarbonDimensionBasedOnColIdentifier(carbonTable, columnIdentifier);
-    return getDictionary(new DictionaryColumnUniqueIdentifier(tableIdentifier, columnIdentifier,
-        dimension.getDataType()), carbonStorePath);
+          String columnIdentifier, String carbonStorePath) throws CarbonUtilException {
+    return getDictionary(new DictionaryColumnUniqueIdentifier(tableIdentifier,
+            columnIdentifier), carbonStorePath);
   }
 
 }
