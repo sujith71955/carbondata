@@ -661,8 +661,10 @@ public final class FilterUtil {
   public static void prepareKeysFromSurrogates(DimColumnFilterInfo filterValues,
       KeyGenerator blockKeyGenerator, CarbonDimension dimension,
       DimColumnExecuterFilterInfo dimColumnExecuterInfo) {
-    byte[][] keysBasedOnFilter = getKeyArray(filterValues, dimension, blockKeyGenerator);
-    dimColumnExecuterInfo.setFilterKeys(keysBasedOnFilter);
+    if (dimension.getDataType() != DataType.TIMESTAMP) {
+      byte[][] keysBasedOnFilter = getKeyArray(filterValues, dimension, blockKeyGenerator);
+      dimColumnExecuterInfo.setFilterKeys(keysBasedOnFilter);
+    }
   }
 
   /**

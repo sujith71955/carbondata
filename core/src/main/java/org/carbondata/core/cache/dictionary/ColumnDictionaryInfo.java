@@ -19,7 +19,6 @@
 
 package org.carbondata.core.cache.dictionary;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -169,36 +168,38 @@ public class ColumnDictionaryInfo extends AbstractColumnDictionaryInfo {
 
   private int compareFilterKeyWithDictionaryKey(String dictionaryVal, String memberVal,
       DataType dataType) {
-    switch (dataType) {
-      case INT:
+    try {
+      switch (dataType) {
+        case INT:
 
-        return Integer.compare((Integer.parseInt(dictionaryVal)), (Integer.parseInt(memberVal)));
-      case DOUBLE:
-        return Double.compare((Double.parseDouble(dictionaryVal)), (Double.parseDouble(memberVal)));
-      case LONG:
-        return Long.compare((Long.parseLong(dictionaryVal)), (Long.parseLong(memberVal)));
-      case BOOLEAN:
-        return Boolean
-            .compare((Boolean.parseBoolean(dictionaryVal)), (Boolean.parseBoolean(memberVal)));
-      case TIMESTAMP:
-        SimpleDateFormat parser = new SimpleDateFormat(CarbonProperties.getInstance()
-            .getProperty(CarbonCommonConstants.CARBON_TIMESTAMP_FORMAT,
-                CarbonCommonConstants.CARBON_TIMESTAMP_DEFAULT_FORMAT));
-        Date dateToStr;
-        Date dictionaryDate;
-        try {
+          return Integer.compare((Integer.parseInt(dictionaryVal)), (Integer.parseInt(memberVal)));
+        case DOUBLE:
+          return Double
+              .compare((Double.parseDouble(dictionaryVal)), (Double.parseDouble(memberVal)));
+        case LONG:
+          return Long.compare((Long.parseLong(dictionaryVal)), (Long.parseLong(memberVal)));
+        case BOOLEAN:
+          return Boolean
+              .compare((Boolean.parseBoolean(dictionaryVal)), (Boolean.parseBoolean(memberVal)));
+        case TIMESTAMP:
+          SimpleDateFormat parser = new SimpleDateFormat(CarbonProperties.getInstance()
+              .getProperty(CarbonCommonConstants.CARBON_TIMESTAMP_FORMAT,
+                  CarbonCommonConstants.CARBON_TIMESTAMP_DEFAULT_FORMAT));
+          Date dateToStr;
+          Date dictionaryDate;
           dateToStr = parser.parse(memberVal);
           dictionaryDate = parser.parse(dictionaryVal);
           return dictionaryDate.compareTo(dateToStr);
-        } catch (ParseException e) {
+
+        case DECIMAL:
+          java.math.BigDecimal javaDecValForDictVal = new java.math.BigDecimal(dictionaryVal);
+          java.math.BigDecimal javaDecValForMemberVal = new java.math.BigDecimal(memberVal);
+          return javaDecValForDictVal.compareTo(javaDecValForMemberVal);
+        default:
           return -1;
-        }
-      case DECIMAL:
-        java.math.BigDecimal javaDecValForDictVal = new java.math.BigDecimal(dictionaryVal);
-        java.math.BigDecimal javaDecValForMemberVal = new java.math.BigDecimal(memberVal);
-        return javaDecValForDictVal.compareTo(javaDecValForMemberVal);
-      default:
-        return -1;
+      }
+    } catch (Exception e) {
+      return -1;
     }
   }
 
