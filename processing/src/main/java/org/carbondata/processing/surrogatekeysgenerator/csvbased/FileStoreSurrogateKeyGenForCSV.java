@@ -36,6 +36,9 @@ import org.carbondata.core.cache.CacheType;
 import org.carbondata.core.cache.dictionary.Dictionary;
 import org.carbondata.core.cache.dictionary.DictionaryColumnUniqueIdentifier;
 import org.carbondata.core.carbon.CarbonTableIdentifier;
+import org.carbondata.core.carbon.metadata.CarbonMetadata;
+import org.carbondata.core.carbon.metadata.schema.table.CarbonTable;
+import org.carbondata.core.carbon.metadata.schema.table.column.CarbonDimension;
 import org.carbondata.core.carbon.path.CarbonStorePath;
 import org.carbondata.core.carbon.path.CarbonTablePath;
 import org.carbondata.core.constants.CarbonCommonConstants;
@@ -105,12 +108,13 @@ public class FileStoreSurrogateKeyGenForCSV extends CarbonCSVBasedDimSurrogateKe
    * task id, each spark task has a unique id
    */
   private String taskNo;
+
   /**
    * @param columnsInfo
    * @throws KettleException
    */
-  public FileStoreSurrogateKeyGenForCSV(ColumnsInfo columnsInfo, String partitionID,
-      int segmentId, String taskNo) throws KettleException {
+  public FileStoreSurrogateKeyGenForCSV(ColumnsInfo columnsInfo, String partitionID, int segmentId,
+      String taskNo) throws KettleException {
     super(columnsInfo);
     populatePrimaryKeyarray(dimInsertFileNames, columnsInfo.getPrimaryKeyMap());
     this.partitionID = partitionID;
@@ -195,8 +199,7 @@ public class FileStoreSurrogateKeyGenForCSV extends CarbonCSVBasedDimSurrogateKe
         CarbonStorePath.getCarbonTablePath(baseStorePath, carbonTableIdentifier);
     String carbonDataDirectoryPath =
         carbonTablePath.getCarbonDataDirectoryPath(this.partitionID, this.segmentId);
-    carbonDataDirectoryPath =
-        carbonDataDirectoryPath + File.separator + taskNo;
+    carbonDataDirectoryPath = carbonDataDirectoryPath + File.separator + taskNo;
     carbonDataDirectoryPath =
         carbonDataDirectoryPath + CarbonCommonConstants.FILE_INPROGRESS_STATUS;
     boolean isDirCreated = new File(carbonDataDirectoryPath).mkdirs();
@@ -259,27 +262,34 @@ public class FileStoreSurrogateKeyGenForCSV extends CarbonCSVBasedDimSurrogateKe
         new ArrayList<>(dimColumnNames.length);
     // update the member cache for dimension
     for (int i = 0; i < dimColumnNames.length; i++) {
-      if(columnsInfo.getDirectDictionary()[i]){
+      if (columnsInfo.getDirectDictionary()[i]) {
         continue;
       }
       String dimColName = dimColumnNames[i].substring(tableName.length() + 1);
       GenericDataType complexType = columnsInfo.getComplexTypesMap().get(dimColName);
+      CarbonDimension dimension = null;
+      CarbonTable carbonTable =
+          CarbonMetadata.getInstance().getCarbonTable(carbonTableIdentifier.getTableUniqueName());
       if (complexType != null) {
         List<GenericDataType> primitiveChild = new ArrayList<GenericDataType>();
         complexType.getAllPrimitiveChildren(primitiveChild);
         for (GenericDataType eachPrimitive : primitiveChild) {
           String dimColumnName =
               tableName + CarbonCommonConstants.UNDERSCORE + eachPrimitive.getName();
+          dimension = CarbonMetadata.getInstance()
+              .getCarbonDimensionBasedOnColIdentifier(carbonTable, eachPrimitive.getColumnId());
           DictionaryColumnUniqueIdentifier dictionaryColumnUniqueIdentifier =
               new DictionaryColumnUniqueIdentifier(carbonTableIdentifier,
-                  eachPrimitive.getColumnId());
+                  eachPrimitive.getColumnId(), dimension.getDataType());
           dictionaryColumnUniqueIdentifiers.add(dictionaryColumnUniqueIdentifier);
           dictionaryKeys.add(dimColumnName);
         }
       } else {
+        dimension = CarbonMetadata.getInstance()
+            .getCarbonDimensionBasedOnColIdentifier(carbonTable, dimColumnIds[i]);
         DictionaryColumnUniqueIdentifier dictionaryColumnUniqueIdentifier =
-            new DictionaryColumnUniqueIdentifier(carbonTableIdentifier,
-                dimColumnIds[i]);
+            new DictionaryColumnUniqueIdentifier(carbonTableIdentifier, dimColumnIds[i],
+                dimension.getDataType());
         dictionaryColumnUniqueIdentifiers.add(dictionaryColumnUniqueIdentifier);
         dictionaryKeys.add(dimColumnNames[i]);
       }
@@ -287,6 +297,7 @@ public class FileStoreSurrogateKeyGenForCSV extends CarbonCSVBasedDimSurrogateKe
     initDictionaryCacheInfo(dictionaryKeys, dictionaryColumnUniqueIdentifiers,
         reverseDictionaryCache, carbonStorePath);
   }
+
   /**
    * This method will initial the needed information for a dictionary of one column.
    *

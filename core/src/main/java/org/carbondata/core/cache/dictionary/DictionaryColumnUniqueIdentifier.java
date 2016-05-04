@@ -20,6 +20,7 @@
 package org.carbondata.core.cache.dictionary;
 
 import org.carbondata.core.carbon.CarbonTableIdentifier;
+import org.carbondata.core.carbon.metadata.datatype.DataType;
 
 /**
  * dictionary column identifier which includes table identifier and column identifier
@@ -36,14 +37,17 @@ public class DictionaryColumnUniqueIdentifier {
    */
   private String columnIdentifier;
 
-  /**
-   * @param carbonTableIdentifier
-   * @param columnIdentifier
-   */
+  private DataType dataType;
+
   public DictionaryColumnUniqueIdentifier(CarbonTableIdentifier carbonTableIdentifier,
-      String columnIdentifier) {
+      String columnIdentifier, DataType dataType) {
     this.carbonTableIdentifier = carbonTableIdentifier;
     this.columnIdentifier = columnIdentifier;
+    this.dataType = dataType;
+  }
+
+  public DataType getDataType() {
+    return dataType;
   }
 
   /**

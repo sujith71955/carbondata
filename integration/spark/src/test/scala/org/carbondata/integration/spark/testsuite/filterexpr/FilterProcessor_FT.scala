@@ -19,9 +19,10 @@
 
 package org.carbondata.integration.spark.testsuite.filterexpr
 
-import org.apache.spark.sql.Row
 import org.apache.spark.sql.common.util.CarbonHiveContext._
 import org.apache.spark.sql.common.util.QueryTest
+import org.apache.spark.sql.Row
+
 import org.scalatest.BeforeAndAfterAll
 
 /**
@@ -46,6 +47,18 @@ class FilterProcessor_FT extends QueryTest with BeforeAndAfterAll {
     )
   }
 
+  test("Greater Than Filter") {
+    checkAnswer(
+      sql("select id from filtertestTables " + "where id >999"),
+      Seq(Row(1000))
+    )
+  }
+  test("Greater Than equal to Filter") {
+    checkAnswer(
+      sql("select id from filtertestTables " + "where id >=999"),
+      Seq(Row(999), Row(1000))
+    )
+  }
   test("Include Filter") {
     checkAnswer(
       sql("select id from filtertestTables " + "where id =999"),

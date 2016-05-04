@@ -76,12 +76,12 @@ public class CarbonDictionarySortModel implements Comparable<CarbonDictionarySor
         try {
           d1 = new Double(memberValue);
         } catch (NumberFormatException e) {
-          return -1;
+          return 1;
         }
         try {
           d2 = new Double(o.memberValue);
         } catch (NumberFormatException e) {
-          return 1;
+          return -1;
         }
         return d1.compareTo(d2);
       case STRING:
