@@ -117,9 +117,19 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
   private byte[] startKey;
 
   /**
+   * no dictionary start key.
+   */
+  private byte[] noDictStartKey;
+
+  /**
    * end key of each blocklet
    */
   private byte[] endKey;
+
+  /**
+   * no dictionary Endkey.
+   */
+  private byte[] noDictEndKey;
 
   private Map<Integer, GenericDataType> complexIndexMap;
 
@@ -352,7 +362,7 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
         .getProperty(CarbonCommonConstants.AGGREAGATE_COLUMNAR_KEY_BLOCK,
             CarbonCommonConstants.AGGREAGATE_COLUMNAR_KEY_BLOCK_DEFAULTVALUE));
 
-    this.complexColCount=getComplexColsCount();
+    this.complexColCount = getComplexColsCount();
     this.columnStoreCount =
         this.colGrpModel.getNoOfColumnStore() + NoDictionaryCount + complexColCount;
 
@@ -527,16 +537,18 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
    */
   private void addToStore(Object[] row) throws CarbonDataWriterException {
     byte[] mdkey = (byte[]) row[this.mdKeyIndex];
-    byte[] NoDictionaryKey = null;
+    byte[] noDictionaryKey = null;
     if (NoDictionaryCount > 0 || complexIndexMap.size() > 0) {
-      NoDictionaryKey = (byte[]) row[this.mdKeyIndex - 1];
+      noDictionaryKey = (byte[]) row[this.mdKeyIndex - 1];
     }
     ByteBuffer byteBuffer = null;
     byte[] b = null;
     if (this.entryCount == 0) {
       this.startKey = mdkey;
+      this.noDictStartKey = noDictionaryKey;
     }
     this.endKey = mdkey;
+    this.noDictEndKey = noDictionaryKey;
     // add to key store
     if (mdkey.length > 0) {
       keyDataHolder.setWritableByteArrayValueByIndex(entryCount, mdkey);
@@ -544,7 +556,7 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
 
     // for storing the byte [] for high card.
     if (NoDictionaryCount > 0 || complexIndexMap.size() > 0) {
-      NoDictionarykeyDataHolder.setWritableByteArrayValueByIndex(entryCount, NoDictionaryKey);
+      NoDictionarykeyDataHolder.setWritableByteArrayValueByIndex(entryCount, noDictionaryKey);
     }
     //Add all columns to keyDataHolder
     keyDataHolder.setWritableByteArrayValueByIndex(entryCount, this.mdKeyIndex, row);
@@ -593,8 +605,7 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
     // this to data file and update the intermediate files
     if (this.entryCount == this.blockletSize) {
       byte[][] byteArrayValues = keyDataHolder.getByteArrayValues().clone();
-      byte[][] noDictionaryValueHolder =
-          NoDictionarykeyDataHolder.getByteArrayValues();
+      byte[][] noDictionaryValueHolder = NoDictionarykeyDataHolder.getByteArrayValues();
       //TODO need to handle high card also here
       calculateUniqueValue(min, uniqueValue);
       ValueCompressionModel compressionModel = ValueCompressionUtil
@@ -610,7 +621,8 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
       endKey = new byte[mdkeyLength];
       writerExecutorService.submit(
           new DataWriterThread(writableMeasureDataArray, byteArrayValues, entryCountLocal,
-              startKeyLocal, endKeyLocal, compressionModel, noDictionaryValueHolder));
+              startKeyLocal, endKeyLocal, compressionModel, noDictionaryValueHolder, noDictStartKey,
+              noDictEndKey));
       // set the entry count to zero
       processedDataCount += entryCount;
       LOGGER.info(CarbonDataProcessorLogEvent.UNIBI_CARBONDATAPROCESSOR_MSG,
@@ -625,8 +637,8 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
 
   private void writeDataToFile(byte[][] dataHolderLocal, byte[][] byteArrayValues,
       int entryCountLocal, byte[] startkeyLocal, byte[] endKeyLocal,
-      ValueCompressionModel compressionModel, byte[][] noDictionaryData)
-      throws CarbonDataWriterException {
+      ValueCompressionModel compressionModel, byte[][] noDictionaryData,
+      byte[] noDictionaryStartKey, byte[] noDictionaryEndKey) throws CarbonDataWriterException {
     byte[][][] noDictionaryColumnsData = null;
     List<ArrayList<byte[]>> colsAndValues = new ArrayList<ArrayList<byte[]>>();
     int complexColCount = getComplexColsCount();
@@ -722,8 +734,7 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
       LOGGER.info(CarbonDataProcessorLogEvent.UNIBI_CARBONDATAPROCESSOR_MSG, e, e.getMessage());
     }
     IndexStorage[] blockStorage =
-        new IndexStorage[colGrpModel.getNoOfColumnStore() + NoDictionaryCount
-            + complexColCount];
+        new IndexStorage[colGrpModel.getNoOfColumnStore() + NoDictionaryCount + complexColCount];
     try {
       for (int k = 0; k < blockStorage.length; k++) {
         blockStorage[k] = submit.get(k).get();
@@ -733,14 +744,15 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
     }
     synchronized (lock) {
       this.dataWriter.writeDataToFile(blockStorage, dataHolderLocal, entryCountLocal, startkeyLocal,
-          endKeyLocal, compressionModel);
+          endKeyLocal, compressionModel, noDictionaryStartKey, noDictionaryEndKey);
     }
   }
 
   /**
    * DataHolder will have all row mdkey data
+   *
    * @param noOfColumn : no of column participated in mdkey
-   * @param noOfRow : total no of row
+   * @param noOfRow    : total no of row
    * @return : dataholder
    */
   private DataHolder[] getDataHolders(int noOfColumn, int noOfRow) {
@@ -772,8 +784,9 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
           .getValueCompressionModel(max, min, decimal, uniqueValue, type, new byte[max.length]);
       byte[][] writableMeasureDataArray =
           StoreFactory.createDataStore(compressionModel).getWritableMeasureDataArray(dataHolder);
-      writeDataToFile(writableMeasureDataArray, data, entryCount, this.startKey,
-          this.endKey, compressionModel, NoDictionarykeyDataHolder.getByteArrayValues());
+      writeDataToFile(writableMeasureDataArray, data, entryCount, this.startKey, this.endKey,
+          compressionModel, NoDictionarykeyDataHolder.getByteArrayValues(), this.noDictStartKey,
+          this.noDictEndKey);
       processedDataCount += entryCount;
       LOGGER.info(CarbonDataProcessorLogEvent.UNIBI_CARBONDATAPROCESSOR_MSG,
           "*******************************************Number Of records processed: "
@@ -1019,10 +1032,9 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
 
     initialisedataHolder();
     setComplexMapSurrogateIndex(this.dimensionCount);
-    int[] blockKeySize =
-        getBlockKeySizeWithComplexTypes(new MultiDimKeyVarLengthEquiSplitGenerator(
-            CarbonUtil.getIncrementedCardinalityFullyFilled(completeDimLens.clone()), (byte) dimSet)
-            .getBlockKeySize());
+    int[] blockKeySize = getBlockKeySizeWithComplexTypes(new MultiDimKeyVarLengthEquiSplitGenerator(
+        CarbonUtil.getIncrementedCardinalityFullyFilled(completeDimLens.clone()), (byte) dimSet)
+        .getBlockKeySize());
     this.dataWriter =
         getFactDataWriter(this.storeLocation, this.measureCount, this.mdkeyLength, this.tableName,
             true, fileManager, blockKeySize);
@@ -1032,8 +1044,10 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
 
     initializeMinMax();
   }
+
   /**
    * This method combines primitive dimensions with complex metadata columns
+   *
    * @param primitiveBlockKeySize
    * @return all dimensions cardinality including complex dimension metadata column
    */
@@ -1142,8 +1156,7 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
   }
 
   private boolean[] isComplexTypes() {
-    int noOfColumn =
-        colGrpModel.getNoOfColumnStore() + NoDictionaryCount + complexIndexMap.size();
+    int noOfColumn = colGrpModel.getNoOfColumnStore() + NoDictionaryCount + complexIndexMap.size();
     int allColsCount = getColsCount(noOfColumn);
     boolean[] isComplexType = new boolean[allColsCount];
 
@@ -1179,11 +1192,15 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
 
     private byte[] endKeyLocal;
 
+    private byte[] noDictStartKeyLocal;
+
+    private byte[] noDictEndKeyLocal;
+
     private ValueCompressionModel compressionModel;
 
     private DataWriterThread(byte[][] dataHolderLocal, byte[][] keyByteArrayValues,
-        int entryCountLocal, byte[] startKey, byte[] endKey,
-        ValueCompressionModel compressionModel, byte[][] noDictionaryValueHolder) {
+        int entryCountLocal, byte[] startKey, byte[] endKey, ValueCompressionModel compressionModel,
+        byte[][] noDictionaryValueHolder, byte[] noDictStartKey, byte[] noDictEndKey) {
       this.keyByteArrayValues = keyByteArrayValues;
       this.entryCountLocal = entryCountLocal;
       this.startkeyLocal = startKey;
@@ -1191,11 +1208,14 @@ public class CarbonFactDataHandlerColumnar implements CarbonFactHandler {
       this.dataHolderLocal = dataHolderLocal;
       this.compressionModel = compressionModel;
       this.noDictionaryValueHolder = noDictionaryValueHolder;
+      this.noDictStartKeyLocal = noDictStartKey;
+      this.noDictEndKeyLocal = noDictEndKey;
     }
 
     @Override public IndexStorage call() throws Exception {
       writeDataToFile(dataHolderLocal, keyByteArrayValues, entryCountLocal, startkeyLocal,
-          endKeyLocal, compressionModel, noDictionaryValueHolder);
+          endKeyLocal, compressionModel, noDictionaryValueHolder, noDictStartKeyLocal,
+          noDictEndKeyLocal);
       return null;
     }
 

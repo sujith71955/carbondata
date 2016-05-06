@@ -72,8 +72,8 @@ public class CarbonFactDataWriterImplForIntIndexAndAggBlock extends AbstractFact
   }
 
   @Override public void writeDataToFile(IndexStorage<int[]>[] keyStorageArray, byte[][] dataArray,
-      int entryCount, byte[] startKey, byte[] endKey, ValueCompressionModel compressionModel)
-      throws CarbonDataWriterException {
+      int entryCount, byte[] startKey, byte[] endKey, ValueCompressionModel compressionModel,
+      byte[] noDictionaryStartKey, byte[] noDictionaryEndKey) throws CarbonDataWriterException {
     // total measure length;
     int totalMsrArrySize = 0;
     // current measure length;
@@ -182,10 +182,11 @@ public class CarbonFactDataWriterImplForIntIndexAndAggBlock extends AbstractFact
     // dictionary key><DictionaryKey><No Dictionary key>
     ByteBuffer buffer = ByteBuffer.allocate(
         CarbonCommonConstants.INT_SIZE_IN_BYTE + CarbonCommonConstants.INT_SIZE_IN_BYTE
-            + endKey.length);
+            + endKey.length + noDictionaryEndKey.length);
     buffer.putInt(endKey.length);
-    buffer.putInt(0);
+    buffer.putInt(noDictionaryEndKey.length);
     buffer.put(endKey);
+    buffer.put(noDictionaryEndKey);
     buffer.rewind();
     holder.setEndKey(buffer.array());
     holder.setMeasureLenght(msrLength);
@@ -193,10 +194,10 @@ public class CarbonFactDataWriterImplForIntIndexAndAggBlock extends AbstractFact
     // dictionary key><DictionaryKey><No Dictionary key>
     buffer = ByteBuffer.allocate(
         CarbonCommonConstants.INT_SIZE_IN_BYTE + CarbonCommonConstants.INT_SIZE_IN_BYTE
-            + endKey.length);
+            + endKey.length + noDictionaryEndKey.length);
     buffer.putInt(startKey.length);
-    buffer.putInt(0);
-    buffer.put(startKey);
+    buffer.putInt(noDictionaryStartKey.length);
+    buffer.put(noDictionaryStartKey);
     buffer.rewind();
     holder.setStartKey(buffer.array());
     holder.setEntryCount(entryCount);

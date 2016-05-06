@@ -355,7 +355,7 @@ public class CarbonFactDataHandlerColumnarMerger implements CarbonFactHandler {
     }
     synchronized (lock) {
       this.dataWriter.writeDataToFile(blockStorage, dataHolderLocal, entryCountLocal, startkeyLocal,
-          endKeyLocal, compressionModel);
+          endKeyLocal, compressionModel,null,null);
     }
   }
 
@@ -432,7 +432,7 @@ public class CarbonFactDataHandlerColumnarMerger implements CarbonFactHandler {
           .getValueCompressionModel(max, min, decimal, uniqueValue, type, new byte[max.length]);
       this.dataWriter.writeDataToFile(blockStorage,
           StoreFactory.createDataStore(compressionModel).getWritableMeasureDataArray(dataHolder),
-          this.entryCount, this.startKey, this.endKey, compressionModel);
+          this.entryCount, this.startKey, this.endKey, compressionModel,null,null);
 
       processedDataCount += entryCount;
       LOGGER.info(CarbonDataProcessorLogEvent.UNIBI_CARBONDATAPROCESSOR_MSG,

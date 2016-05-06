@@ -55,8 +55,8 @@ public class CarbonFactDataWriterImplForIntIndex extends AbstractFactDataWriter<
   }
 
   @Override public void writeDataToFile(IndexStorage<int[]>[] keyStorageArray, byte[][] dataArray,
-      int entryCount, byte[] startKey, byte[] endKey, ValueCompressionModel compressionModel)
-      throws CarbonDataWriterException {
+      int entryCount, byte[] startKey, byte[] endKey, ValueCompressionModel compressionModel,
+      byte[] nodictStartKey, byte[] noDictEndKey) throws CarbonDataWriterException {
     // current measure length;
     int currentMsrLenght = 0;
     // total measure length;
@@ -170,7 +170,7 @@ public class CarbonFactDataWriterImplForIntIndex extends AbstractFactDataWriter<
    *
    * @return file offset offset is the current position of the file
    * @throws CarbonDataWriterException if will throw CarbonDataWriterException when any thing
-   * goes wrong
+   *                                   goes wrong
    *                                   while while writing the leaf file
    */
   protected long writeDataToFile(NodeHolder nodeHolder, FileChannel channel)
