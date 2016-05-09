@@ -40,7 +40,6 @@ import org.carbondata.core.cache.CacheType;
 import org.carbondata.core.cache.dictionary.Dictionary;
 import org.carbondata.core.cache.dictionary.DictionaryChunksWrapper;
 import org.carbondata.core.cache.dictionary.DictionaryColumnUniqueIdentifier;
-import org.carbondata.core.cache.dictionary.ForwardDictionary;
 import org.carbondata.core.carbon.AbsoluteTableIdentifier;
 import org.carbondata.core.carbon.datastore.IndexKey;
 import org.carbondata.core.carbon.datastore.block.AbstractIndex;
@@ -333,6 +332,7 @@ public final class FilterUtil {
     List<String> evaluateResultListFinal = new ArrayList<String>(20);
     try {
       List<ExpressionResult> evaluateResultList = expression.evaluate(null).getList();
+      Collections.sort(evaluateResultList);
       for (ExpressionResult result : evaluateResultList) {
         if (result.getString() == null) {
           evaluateResultListFinal.add(CarbonCommonConstants.MEMBER_DEFAULT_VAL);
@@ -464,10 +464,10 @@ public final class FilterUtil {
     List<byte[]> filterValuesList = new ArrayList<byte[]>(20);
     Arrays.fill(keys, 0);
     int[] rangesForMaskedByte =
-        getRangesForMaskedByte((carbonDimension.getOrdinal()), blockLevelKeyGenerator);
+        getRangesForMaskedByte((carbonDimension.getKeyOrdinal()), blockLevelKeyGenerator);
     for (Integer surrogate : dimColumnFilterInfo.getFilterList()) {
       try {
-        keys[carbonDimension.getOrdinal()] = surrogate;
+        keys[carbonDimension.getKeyOrdinal()] = surrogate;
         filterValuesList
             .add(getMaskedKey(rangesForMaskedByte, blockLevelKeyGenerator.generateKey(keys)));
       } catch (KeyGenException e) {
@@ -619,8 +619,8 @@ public final class FilterUtil {
         // step 3
         if (compareFilterKeyBasedOnDataType(new String(noDictionaryEndKey), new String(
                 listOfDimColFilterInfo.get(i).getNoDictionaryFilterValuesList()
-                    .get(listOfDimColFilterInfo.get(i)
-                        .getNoDictionaryFilterValuesList().size() - 1)),
+                    .get(listOfDimColFilterInfo.get(i).
+                        getNoDictionaryFilterValuesList().size() - 1)),
             entry.getKey().getDataType()) < 0) {
           noDictionaryEndKey = listOfDimColFilterInfo.get(i).getNoDictionaryFilterValuesList()
               .get(listOfDimColFilterInfo.get(i).getNoDictionaryFilterValuesList().size() - 1);
@@ -688,8 +688,8 @@ public final class FilterUtil {
         continue;
       }
       for (DimColumnFilterInfo info : values) {
-        if (startKey[entry.getKey().getOrdinal()] < info.getFilterList().get(0)) {
-          startKey[entry.getKey().getOrdinal()] = info.getFilterList().get(0);
+        if (startKey[entry.getKey().getKeyOrdinal()] < info.getFilterList().get(0)) {
+          startKey[entry.getKey().getKeyOrdinal()] = info.getFilterList().get(0);
         }
       }
     }
@@ -738,9 +738,9 @@ public final class FilterUtil {
       }
 
       for (DimColumnFilterInfo info : values) {
-        if (endKey[entry.getKey().getOrdinal()] > info.getFilterList()
+        if (endKey[entry.getKey().getKeyOrdinal()] > info.getFilterList()
             .get(info.getFilterList().size() - 1)) {
-          endKey[entry.getKey().getOrdinal()] =
+          endKey[entry.getKey().getKeyOrdinal()] =
               info.getFilterList().get(info.getFilterList().size() - 1);
         }
       }
