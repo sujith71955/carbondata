@@ -242,7 +242,6 @@ public final class FilterUtil {
         surrogates.add(dictionaryVal);
       }
     }
-    resetDictionarySearchIndex(tableIdentifier, columnExpression.getDimension());
     Collections.sort(surrogates);
     DimColumnFilterInfo columnFilterInfo = null;
     if (surrogates.size() > 0) {
@@ -251,14 +250,6 @@ public final class FilterUtil {
       columnFilterInfo.setFilterList(surrogates);
     }
     return columnFilterInfo;
-  }
-
-  private static void resetDictionarySearchIndex(AbsoluteTableIdentifier tableIdentifier,
-      CarbonDimension dimension) throws QueryExecutionException {
-    Dictionary forwardDictionary = getForwardDictionaryCache(tableIdentifier, dimension);
-    if (null != forwardDictionary && forwardDictionary instanceof ForwardDictionary) {
-      ((ForwardDictionary) forwardDictionary).resetSearchIndex();
-    }
   }
 
   /**
@@ -342,7 +333,6 @@ public final class FilterUtil {
     List<String> evaluateResultListFinal = new ArrayList<String>(20);
     try {
       List<ExpressionResult> evaluateResultList = expression.evaluate(null).getList();
-      Collections.sort(evaluateResultList);
       for (ExpressionResult result : evaluateResultList) {
         if (result.getString() == null) {
           evaluateResultListFinal.add(CarbonCommonConstants.MEMBER_DEFAULT_VAL);
