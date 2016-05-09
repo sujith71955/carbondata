@@ -21,7 +21,6 @@ package org.carbondata.query.filter.resolver;
 import org.carbondata.core.carbon.AbsoluteTableIdentifier;
 import org.carbondata.core.carbon.datastore.IndexKey;
 import org.carbondata.core.carbon.datastore.block.AbstractIndex;
-import org.carbondata.core.keygenerator.KeyGenerator;
 import org.carbondata.query.carbonfilterinterface.ExpressionType;
 import org.carbondata.query.carbonfilterinterface.FilterExecuterType;
 import org.carbondata.query.evaluators.DimColumnResolvedFilterInfo;
@@ -80,7 +79,7 @@ public class LogicalFilterResolverImpl implements FilterResolverIntf {
     return null;
   }
 
-  @Override public IndexKey getstartKey(KeyGenerator keyGenerator) {
+  @Override public IndexKey getstartKey(AbstractIndex tableSegment) {
     // TODO Auto-generated method stub
     return null;
   }

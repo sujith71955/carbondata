@@ -24,7 +24,6 @@ import org.carbondata.core.carbon.AbsoluteTableIdentifier;
 import org.carbondata.core.carbon.datastore.IndexKey;
 import org.carbondata.core.carbon.datastore.block.AbstractIndex;
 import org.carbondata.core.carbon.metadata.encoder.Encoding;
-import org.carbondata.core.keygenerator.KeyGenerator;
 import org.carbondata.query.carbon.executor.exception.QueryExecutionException;
 import org.carbondata.query.carbonfilterinterface.FilterExecuterType;
 import org.carbondata.query.evaluators.DimColumnResolvedFilterInfo;
@@ -186,11 +185,15 @@ public class ConditionalFilterResolverImpl implements FilterResolverIntf {
    *
    * @return start IndexKey
    */
-  @Override public IndexKey getstartKey(KeyGenerator keyGen) {
+  @Override public IndexKey getstartKey(AbstractIndex tableSegment) {
     IndexKey startIndexKey = null;
     if (null == dimColResolvedFilterInfo.getStarIndexKey()) {
-      long[] startKey = FilterUtil.getStartKey(dimColResolvedFilterInfo, keyGen);
-      startIndexKey = FilterUtil.createIndexKeyFromResolvedFilterVal(startKey, keyGen);
+      long[] startKey = FilterUtil.getStartKey(dimColResolvedFilterInfo, tableSegment);
+      byte[] startKeyForNoDictDimension =
+          FilterUtil.getStartKeyForNoDictionaryDimension(dimColResolvedFilterInfo, tableSegment);
+      startIndexKey = FilterUtil.createIndexKeyFromResolvedFilterVal(startKey,
+          tableSegment.getSegmentProperties().getDimensionKeyGenerator(),
+          startKeyForNoDictDimension);
       dimColResolvedFilterInfo.setStarIndexKey(startIndexKey);
     } else {
       return dimColResolvedFilterInfo.getStarIndexKey();
@@ -208,18 +211,21 @@ public class ConditionalFilterResolverImpl implements FilterResolverIntf {
     long[] endKey =
         new long[tableSegment.getSegmentProperties().getDimensionKeyGenerator().getDimCount()];
     IndexKey endIndexKey = null;
+    byte[] endKeyForNoDictDimension = null;
     if (null == dimColResolvedFilterInfo.getEndIndexKey())
 
     {
       try {
         endKey = FilterUtil.getEndKey(dimColResolvedFilterInfo.getDimensionResolvedFilterInstance(),
             absoluteTableIdentifier, endKey, tableSegment.getSegmentProperties().getDimensions());
+        endKeyForNoDictDimension =
+            FilterUtil.getEndKeyForNoDictionaryDimension(dimColResolvedFilterInfo, tableSegment);
       } catch (QueryExecutionException e) {
         // TODO Auto-generated catch block
         e.printStackTrace();
       }
       endIndexKey = FilterUtil.createIndexKeyFromResolvedFilterVal(endKey,
-          tableSegment.getSegmentProperties().getDimensionKeyGenerator());
+          tableSegment.getSegmentProperties().getDimensionKeyGenerator(), endKeyForNoDictDimension);
     } else {
       return dimColResolvedFilterInfo.getEndIndexKey();
     }
