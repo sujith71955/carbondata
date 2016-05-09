@@ -31,7 +31,7 @@ import org.carbondata.core.constants.CarbonCommonConstants;
 import org.carbondata.core.util.CarbonProperties;
 import org.carbondata.query.expression.exception.FilterUnsupportedException;
 
-public class ExpressionResult implements Comparable<ExpressionResult> {
+public class ExpressionResult {
 
   private static final long serialVersionUID = 1L;
   protected DataType dataType;
@@ -249,10 +249,7 @@ public class ExpressionResult implements Comparable<ExpressionResult> {
             throw new FilterUnsupportedException(
                 "Cannot convert" + this.getDataType().name() + " to Time/Long type value");
           }
-
         case IntegerType:
-          // Handler: Need to check timestamp is in seconds or millisecs.
-          // This cast makes sense if its in seconds
         case LongType:
           return (Long) value;
         case DoubleType:
@@ -380,37 +377,4 @@ public class ExpressionResult implements Comparable<ExpressionResult> {
   public boolean isNull() {
     return value == null;
   }
-
-  @Override public int compareTo(ExpressionResult o) {
-    try {
-      switch (o.dataType) {
-        case IntegerType:
-        case LongType:
-        case DoubleType:
-
-          Double d1 = this.getDouble();
-          Double d2 = o.getDouble();
-          return d1.compareTo(d2);
-        case DecimalType:
-          java.math.BigDecimal val1 = this.getDecimal();
-          java.math.BigDecimal val2 = o.getDecimal();
-          return val1.compareTo(val2);
-        case TimestampType:
-          SimpleDateFormat parser = new SimpleDateFormat(CarbonProperties.getInstance()
-              .getProperty(CarbonCommonConstants.CARBON_TIMESTAMP_FORMAT,
-                  CarbonCommonConstants.CARBON_TIMESTAMP_DEFAULT_FORMAT));
-          Date date1 = null;
-          Date date2 = null;
-          date1 = parser.parse(this.getString());
-          date2 = parser.parse(o.getString());
-          return date1.compareTo(date2);
-        case StringType:
-        default:
-          return this.getString().compareTo(o.getString());
-      }
-    } catch (Exception e) {
-      return -1;
-    }
-  }
-
 }

@@ -24,6 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -42,7 +43,6 @@ import org.carbondata.core.cache.dictionary.DictionaryChunksWrapper;
 import org.carbondata.core.cache.dictionary.DictionaryColumnUniqueIdentifier;
 import org.carbondata.core.carbon.AbsoluteTableIdentifier;
 import org.carbondata.core.carbon.datastore.IndexKey;
-import org.carbondata.core.carbon.datastore.block.AbstractIndex;
 import org.carbondata.core.carbon.datastore.block.SegmentProperties;
 import org.carbondata.core.carbon.metadata.datatype.DataType;
 import org.carbondata.core.carbon.metadata.encoder.Encoding;
@@ -50,6 +50,7 @@ import org.carbondata.core.carbon.metadata.schema.table.column.CarbonDimension;
 import org.carbondata.core.constants.CarbonCommonConstants;
 import org.carbondata.core.keygenerator.KeyGenException;
 import org.carbondata.core.keygenerator.KeyGenerator;
+import org.carbondata.core.util.ByteUtil;
 import org.carbondata.core.util.CarbonProperties;
 import org.carbondata.core.util.CarbonUtil;
 import org.carbondata.core.util.CarbonUtilException;
@@ -206,6 +207,16 @@ public final class FilterUtil {
     for (String result : evaluateResultListFinal) {
       filterValuesList.add(result.getBytes());
     }
+
+    Comparator<byte[]> filterNoDictValueComaparator = new Comparator<byte[]>() {
+
+      @Override public int compare(byte[] filterMember1, byte[] filterMember2) {
+        // TODO Auto-generated method stub
+        return ByteUtil.UnsafeComparer.INSTANCE.compareTo(filterMember1, filterMember2);
+      }
+
+    };
+    Collections.sort(filterValuesList, filterNoDictValueComaparator);
     DimColumnFilterInfo columnFilterInfo = null;
     if (filterValuesList.size() > 0) {
       columnFilterInfo = new DimColumnFilterInfo();
@@ -332,7 +343,6 @@ public final class FilterUtil {
     List<String> evaluateResultListFinal = new ArrayList<String>(20);
     try {
       List<ExpressionResult> evaluateResultList = expression.evaluate(null).getList();
-      Collections.sort(evaluateResultList);
       for (ExpressionResult result : evaluateResultList) {
         if (result.getString() == null) {
           evaluateResultListFinal.add(CarbonCommonConstants.MEMBER_DEFAULT_VAL);
@@ -456,7 +466,7 @@ public final class FilterUtil {
 
   public static byte[][] getKeyArray(DimColumnFilterInfo dimColumnFilterInfo,
       CarbonDimension carbonDimension, KeyGenerator blockLevelKeyGenerator) {
-    if (!carbonDimension.hasEncoding(Encoding.DIRECT_DICTIONARY)) {
+    if (!carbonDimension.hasEncoding(Encoding.DICTIONARY)) {
       return dimColumnFilterInfo.getNoDictionaryFilterValuesList()
           .toArray((new byte[dimColumnFilterInfo.getNoDictionaryFilterValuesList().size()][]));
     }
@@ -483,13 +493,12 @@ public final class FilterUtil {
    * filter resolved instance.
    *
    * @param dimColResolvedFilterInfo
-   * @param tableSegment
+   * @param segmentProperties
    * @return long[] start key
    */
   public static long[] getStartKey(DimColumnResolvedFilterInfo dimColResolvedFilterInfo,
-      AbstractIndex tableSegment) {
-    long[] startKey =
-        new long[tableSegment.getSegmentProperties().getDimensionKeyGenerator().getDimCount()];
+      SegmentProperties segmentProperties) {
+    long[] startKey = new long[segmentProperties.getDimensionKeyGenerator().getDimCount()];
     Map<CarbonDimension, List<DimColumnFilterInfo>> dimensionFilter =
         dimColResolvedFilterInfo.getDimensionResolvedFilterInstance();
     for (Entry<CarbonDimension, List<DimColumnFilterInfo>> entry : dimensionFilter.entrySet()) {
@@ -524,49 +533,42 @@ public final class FilterUtil {
    * all dimension and the indexes which will help to read the respective filter value.
    *
    * @param dimColResolvedFilterInfo
-   * @param tableSegment
+   * @param segmentProperties
    * @return
    */
   public static byte[] getStartKeyForNoDictionaryDimension(
-      DimColumnResolvedFilterInfo dimColResolvedFilterInfo, AbstractIndex tableSegment) {
+      DimColumnResolvedFilterInfo dimColResolvedFilterInfo, SegmentProperties segmentProperties) {
     Map<CarbonDimension, List<DimColumnFilterInfo>> dimensionFilter =
         dimColResolvedFilterInfo.getDimensionResolvedFilterInstance();
-    List<byte[]> listOfstartKeyByteArray = new ArrayList<byte[]>(
-        tableSegment.getSegmentProperties().getNumberOfNoDictionaryDimension());
+    List<byte[]> listOfstartKeyByteArray =
+        new ArrayList<byte[]>(segmentProperties.getNumberOfNoDictionaryDimension());
     byte[] startNoDictionaryKey = null;
     //step 1
     for (Entry<CarbonDimension, List<DimColumnFilterInfo>> entry : dimensionFilter.entrySet()) {
-      List<DimColumnFilterInfo> values = entry.getValue();
-      if (null == values) {
-        continue;
-      }
-      boolean isExcludePresent = false;
-      for (DimColumnFilterInfo info : values) {
-        if (!info.isIncludeFilter()) {
-          isExcludePresent = true;
+      if (!entry.getKey().hasEncoding(Encoding.DICTIONARY)) {
+        List<DimColumnFilterInfo> values = entry.getValue();
+        if (null == values) {
+          continue;
         }
-      }
-      if (isExcludePresent) {
-        continue;
-      }
-      //step 2
-      byte[] noDictionaryStartKey = values.get(0).getNoDictionaryFilterValuesList().get(0);
-      for (int i = 1; i < values.size(); i++) {
-        //step 3
-        if (compareFilterKeyBasedOnDataType(new String(noDictionaryStartKey),
-            new String(values.get(i).getNoDictionaryFilterValuesList().get(0)),
-            entry.getKey().getDataType()) > 0) {
-          noDictionaryStartKey = values.get(i).getNoDictionaryFilterValuesList().get(0);
-
+        boolean isExcludePresent = false;
+        for (DimColumnFilterInfo info : values) {
+          if (!info.isIncludeFilter()) {
+            isExcludePresent = true;
+          }
         }
+        if (isExcludePresent) {
+          continue;
+        }
+        //step 2
+        byte[] noDictionaryStartKey = values.get(0).getNoDictionaryFilterValuesList().get(0);
+        // Adding the no dictionary start key data which is the smallest in the filters.
+        // step 4
+        listOfstartKeyByteArray.add(noDictionaryStartKey);
       }
-      //Adding the no dictionary start key data which is the smallest in the filters.
-      //step 4
-      listOfstartKeyByteArray.add(noDictionaryStartKey);
     }
     // get the default start key for no dictionary with intial byte value
     if (listOfstartKeyByteArray.isEmpty()) {
-      startNoDictionaryKey = getNoDictionaryDefaultStartKey(tableSegment.getSegmentProperties());
+      startNoDictionaryKey = getNoDictionaryDefaultStartKey(segmentProperties);
       return startNoDictionaryKey;
     } else {
       //step 5
@@ -587,15 +589,15 @@ public final class FilterUtil {
    * all dimension and the indexes which will help to read the respective filter value.
    *
    * @param dimColResolvedFilterInfo
-   * @param tableSegment
+   * @param segmentProperties
    * @return end key array
    */
   public static byte[] getEndKeyForNoDictionaryDimension(
-      DimColumnResolvedFilterInfo dimColResolvedFilterInfo, AbstractIndex tableSegment) {
+      DimColumnResolvedFilterInfo dimColResolvedFilterInfo, SegmentProperties segmentProperties) {
     Map<CarbonDimension, List<DimColumnFilterInfo>> dimensionFilter =
         dimColResolvedFilterInfo.getDimensionResolvedFilterInstance();
-    List<byte[]> listOfEndKeyByteArrayForEachDims = new ArrayList<byte[]>(
-        tableSegment.getSegmentProperties().getNumberOfNoDictionaryDimension());
+    List<byte[]> listOfEndKeyByteArrayForEachDims =
+        new ArrayList<byte[]>(segmentProperties.getNumberOfNoDictionaryDimension());
     byte[] endNoDictionaryKey = null;
     //step 1
     for (Entry<CarbonDimension, List<DimColumnFilterInfo>> entry : dimensionFilter.entrySet()) {
@@ -603,37 +605,27 @@ public final class FilterUtil {
       if (null == listOfDimColFilterInfo) {
         continue;
       }
-      boolean isExcludePresent = false;
-      for (DimColumnFilterInfo info : listOfDimColFilterInfo) {
-        if (!info.isIncludeFilter()) {
-          isExcludePresent = true;
+      if (!entry.getKey().hasEncoding(Encoding.DICTIONARY)) {
+        boolean isExcludePresent = false;
+        for (DimColumnFilterInfo info : listOfDimColFilterInfo) {
+          if (!info.isIncludeFilter()) {
+            isExcludePresent = true;
+          }
         }
-      }
-      if (isExcludePresent) {
-        continue;
-      }
-      //step 2
-      byte[] noDictionaryEndKey = listOfDimColFilterInfo.get(0).getNoDictionaryFilterValuesList()
-          .get(listOfDimColFilterInfo.get(0).getNoDictionaryFilterValuesList().size() - 1);
-      for (int i = 1; i < listOfDimColFilterInfo.size(); i++) {
-        // step 3
-        if (compareFilterKeyBasedOnDataType(new String(noDictionaryEndKey), new String(
-                listOfDimColFilterInfo.get(i).getNoDictionaryFilterValuesList()
-                    .get(listOfDimColFilterInfo.get(i).
-                        getNoDictionaryFilterValuesList().size() - 1)),
-            entry.getKey().getDataType()) < 0) {
-          noDictionaryEndKey = listOfDimColFilterInfo.get(i).getNoDictionaryFilterValuesList()
-              .get(listOfDimColFilterInfo.get(i).getNoDictionaryFilterValuesList().size() - 1);
-
+        if (isExcludePresent) {
+          continue;
         }
+        //step 2
+        byte[] noDictionaryEndKey = listOfDimColFilterInfo.get(0).getNoDictionaryFilterValuesList()
+            .get(listOfDimColFilterInfo.get(0).getNoDictionaryFilterValuesList().size() - 1);
+        // step 4
+        // Adding the no dictionary end key data which is the smallest in the filters.
+        listOfEndKeyByteArrayForEachDims.add(noDictionaryEndKey);
       }
-      //step 4
-      //Adding the no dictionary end key data which is the smallest in the filters.
-      listOfEndKeyByteArrayForEachDims.add(noDictionaryEndKey);
     }
     // get the default end key for no dictionary with max byte value
     if (listOfEndKeyByteArrayForEachDims.isEmpty()) {
-      endNoDictionaryKey = getNoDictionaryDefaultEndKey(tableSegment.getSegmentProperties());
+      endNoDictionaryKey = getNoDictionaryDefaultEndKey(segmentProperties);
       return endNoDictionaryKey;
     } else {
       // return the end key which is made of all the dimension

@@ -271,9 +271,10 @@ public abstract class AbstractQueryExecutor implements QueryExecutor {
       // loading the filter executer tree for filter evaluation
       blockExecutionInfo.setFilterExecuterTree(FilterUtil
           .getFilterExecuterTree(queryModel.getFilterExpressionResolverTree(), blockKeyGenerator));
-      startIndexKey = queryModel.getFilterExpressionResolverTree().getstartKey(blockIndex);
+      startIndexKey = queryModel.getFilterExpressionResolverTree()
+          .getstartKey(blockIndex.getSegmentProperties());
       endIndexKey = queryModel.getFilterExpressionResolverTree()
-          .getEndKey(blockIndex, queryModel.getAbsoluteTableIdentifier());
+          .getEndKey(blockIndex.getSegmentProperties(), queryModel.getAbsoluteTableIdentifier());
       if (null == startIndexKey && null == endIndexKey) {
         try {
           startIndexKey = FilterUtil.prepareDefaultStartIndexKey(segmentProperties);

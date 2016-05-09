@@ -91,8 +91,9 @@ public class FilterExpressionProcessor implements FilterProcessor {
     // selected block reference nodes based on filter resolver tree.
     LOGGER.info("preparing the start and end key for finding"
         + "start and end block as per filter resolver");
-    IndexKey searchStartKey = filterResolver.getstartKey(tableSegment);
-    IndexKey searchEndKey = filterResolver.getEndKey(tableSegment, tableIdentifier);
+    IndexKey searchStartKey = filterResolver.getstartKey(tableSegment.getSegmentProperties());
+    IndexKey searchEndKey = filterResolver.getEndKey(tableSegment.getSegmentProperties(),
+        tableIdentifier);
     if (null == searchStartKey && null == searchEndKey) {
       try {
         // TODO need to handle for no dictionary dimensions
